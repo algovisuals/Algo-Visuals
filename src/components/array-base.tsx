@@ -4,20 +4,24 @@ import { useEffect, FC, useRef } from "react";
 import * as d3 from "d3";
 
 interface ArrayBaseProps {
-    array: number[]; // specify the type of the array (e.g., array of numbers)
+    array: number[]; 
+    pivotIndex?: number;
+    comparing?: number[];
 }
 
-const ArrayBase: FC<ArrayBaseProps> = ({array}) => {
+const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
 
     useEffect(() => {
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
 
-        const width = 700,
-        height = 200;
-        const boxSize = 60,
-        spacing = 10;
+        const boxSize = 50;
+        const spacing = 10;
+        const padding = 50;
+
+        const width = array.length * (boxSize + spacing) + padding;
+        const height = 200;
 
         // Set SVG dimensions
         svg.attr("width", width).attr("height", height);
@@ -34,7 +38,11 @@ const ArrayBase: FC<ArrayBaseProps> = ({array}) => {
         .attr("width", boxSize)
         .attr("height", boxSize)
         .attr("stroke", "black")
-        .attr("fill", "white")
+        .attr("fill", (d, i) => {
+            if (pivotIndex !== undefined && i == pivotIndex) return "red";
+            if (comparing && comparing.includes(i)) return "orange";
+            return "white";
+        })
         .attr("rx", 10);
 
         // Draw array values inside boxes

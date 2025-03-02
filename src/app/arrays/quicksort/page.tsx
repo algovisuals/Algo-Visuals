@@ -37,7 +37,6 @@ const QuickSortPage: FC = () => {
   }, []); // Run once on mount
 
   //declaring constant variable numbers and assigning it to the array of numbers
-  const numbers = [10, 3, 8, 15, 6, 1, 14, 7];
 
   return (
     <div className="flex flex-col min-h-screen transition-colors">
@@ -49,7 +48,7 @@ const QuickSortPage: FC = () => {
             <Sidebar />
             <div className="flex-1 bg-white dark:bg-gray-800 p-6 shadow-lg rounded-lg">
               <ArrayVisualizer step={currentStep} />
-              <ArrayBase array = {numbers}/>
+              <ArrayBase array = {currentStep.arr} pivotIndex = {currentStep.pivotIndex} comparing = {currentStep.comparing}/>
             </div>
           </div>
         </div>
