@@ -20,8 +20,10 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         const spacing = 10;
         const padding = 50;
 
-        const width = array.length * (boxSize + spacing) + padding;
+        const width = array.length * (boxSize + spacing) - spacing;
         const height = 200;
+
+        const startX = 0;
 
         // Set SVG dimensions
         svg.attr("width", width).attr("height", height);
@@ -33,7 +35,7 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         .enter()
         .append("rect")
         .attr("class", "array-box")
-        .attr("x", (d, i) => i * (boxSize + spacing) + 50)
+        .attr("x", (d, i) => i * (boxSize + spacing))
         .attr("y", 50)
         .attr("width", boxSize)
         .attr("height", boxSize)
@@ -52,7 +54,7 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         .enter()
         .append("text")
         .attr("class", "array-value")
-        .attr("x", (d, i) => i * (boxSize + spacing) + 50 + boxSize / 2)
+        .attr("x", (d, i) => i * (boxSize + spacing) + boxSize / 2)
         .attr("y", 50 + boxSize / 2 + 5)
         .attr("text-anchor", "middle")
         .attr("font-size", "18px")
@@ -60,7 +62,11 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         .text(d => d);
     }, [array]); // Re-run if the array changes
 
-    return <svg ref={svgRef}></svg>;
+    return (
+        <div className="flex justify-center items-center">
+            <svg ref={svgRef}></svg>
+        </div>
+    );
 };
 
 export default ArrayBase;
