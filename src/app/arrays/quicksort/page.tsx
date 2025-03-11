@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, FC, useRef } from "react";
 import * as d3 from "d3";
+import ArrayBase from "@/components/array-base";
 
 // webpage visuals
 import Header from "@/components/header";
@@ -108,6 +109,8 @@ const QuickSortPage: FC = () => {
     });
   };
 
+  //declaring constant variable numbers and assigning it to the array of numbers
+
   return (
     <div className="flex flex-col min-h-screen transition-colors">
       <Header />
@@ -123,6 +126,7 @@ const QuickSortPage: FC = () => {
             />
             <div className="flex-1 bg-white dark:bg-gray-800 p-6 shadow-lg rounded-lg">
               <ArrayVisualizer step={currentStep} />
+              <ArrayBase array = {currentStep.arr} pivotIndex = {currentStep.pivotIndex} comparing = {currentStep.comparing}/>
             </div>
           </div>
         </div>
