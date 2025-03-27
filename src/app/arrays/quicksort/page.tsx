@@ -1,12 +1,13 @@
 "use client"; // needed for d3
 
-import React, { useState, useEffect, FC, useRef } from "react";
-import d3 from "d3";
+import React, { useState, FC, useRef } from "react";
 
 // webpage visuals
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/code-side-bar";
+
+const interval_milliseconds = 500; // interval for auto-stepping
 
 // algorithms core
 import { generateRandomArray, ArrayVisualizer, ArrayVisualizerProps } from "@/algorithms-core/arrays_common";
@@ -94,7 +95,7 @@ const QuickSortPage: FC = () => {
                 return prevIndex;
               }
             });
-          }, 500);
+          }, interval_milliseconds);
         }
       } else {
         // Stopping auto-stepping
@@ -108,20 +109,21 @@ const QuickSortPage: FC = () => {
     });
   };
 
+
   return (
     <div className="flex flex-col min-h-screen transition-colors">
       <Header />
       <main className="flex-grow w-full flex items-center justify-center px-4">
         <div className="w-full max-w-screen-2xl">
           <h1 className="text-4xl font-bold text-center mb-8">Quicksort Visualizer</h1>
-          <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex flex-col md:flex-row gap-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
             <Sidebar 
               opt1Action={handleToggleAutoStep} 
               opt2Action={handleStep} 
               opt3Action={() => {}} 
               isAutoStepping={isAutoStepping}
             />
-            <div className="flex-1 bg-white dark:bg-gray-800 p-6 shadow-lg rounded-lg">
+            <div className="p-4 rounded-lg flex-1">
               <ArrayVisualizer step={currentStep} />
             </div>
           </div>

@@ -1,4 +1,4 @@
-import d3 from "d3";
+import * as d3 from "d3";
 import { FC, useEffect, useRef } from "react";
 import { SortStep } from "@/algorithms-core/quicksort"
 
@@ -12,6 +12,13 @@ export function generateRandomArray(length: number, min: number, max: number): n
 export interface ArrayVisualizerProps {
   step: SortStep;
 }
+
+/**
+ * ArrayVisualizer component for visualizing sorting steps.
+ * 
+ * @param param0 - Contains the sorting step data.
+ * @returns JSX.Element
+ */
 
 export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
   const { arr, pivotIndex, comparing } = step;
