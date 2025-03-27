@@ -10,7 +10,7 @@ import Sidebar from "@/components/code-side-bar";
 const interval_milliseconds = 500; // interval for auto-stepping
 
 // algorithms core
-import { generateRandomArray, ArrayVisualizer, ArrayVisualizerProps } from "@/algorithms-core/arrays_common";
+import { generateRandomArray, ArrayVisualizer } from "@/algorithms-core/arrays_common";
 import { SortStep, getQuickSortSteps } from "@/algorithms-core/quicksort";
 
 const QuickSortPage: FC = () => {

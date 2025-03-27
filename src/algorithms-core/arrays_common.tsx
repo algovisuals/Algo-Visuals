@@ -19,7 +19,6 @@ export interface ArrayVisualizerProps {
  * @param param0 - Contains the sorting step data.
  * @returns JSX.Element
  */
-
 export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
   const { arr, pivotIndex, comparing } = step;
   const svgRef = useRef<SVGSVGElement | null>(null);
