@@ -1,6 +1,6 @@
 import * as graphsCommon from '@/algorithms-core/graphs_common';
 
-const printConsole = true;
+const printConsole = false;
 
 describe('generateRandomGraph', () => {
   test('returns an array of the specified length', () => {
@@ -108,4 +108,50 @@ describe('debugGraphConnectedWithNeighbors', () => {
 
     consoleLogSpy.mockRestore();
   });
+
+  describe('createConnectedGraph', () => {
+    test('creates a connected graph', () => {
+      const nodes = graphsCommon.generateRandomGraph(5, 1, 100);
+      graphsCommon.createConnectedGraph(nodes);
+
+      const connectedIds = new Set<string>();
+      nodes.forEach(node => {
+        connectedIds.add(node.id);
+        node.neighbors.forEach(neighbor => {
+          connectedIds.add(neighbor.id);
+        });
+      });
+
+      expect(connectedIds.size).toBe(nodes.length);
+    });
+
+    test('does not create self-loops', () => {
+      const nodes = graphsCommon.generateRandomGraph(5, 1, 100);
+      graphsCommon.createConnectedGraph(nodes);
+
+      nodes.forEach(node => {
+        expect(node.neighbors).not.toContain(node);
+      });
+    });
+
+    test('connected graph does not contain duplicate edges', () => {
+      //generate random graph thats fully connected with random neighbors
+      const nodes = graphsCommon.generateRandomGraph(5, 1, 100);
+      graphsCommon.createConnectedGraph(nodes);
+      graphsCommon.addNeighbors(nodes, 3, 1);
+
+      // Check for duplicate edges
+      let duplicateEdges = false;
+      nodes.forEach(node => {
+        const neighborIds = node.neighbors.map(n => n.id);
+        const uniqueNeighborIds = new Set(neighborIds);
+        if (uniqueNeighborIds.size !== neighborIds.length) {
+          duplicateEdges = true;
+          throw new Error(`Node ${node.id} contains duplicate edges. Expected ${neighborIds.length} unique neighbors but got ${uniqueNeighborIds.size}`);
+        }
+      });
+      expect(duplicateEdges).toBe(false);
+    });
+  });
+
 });

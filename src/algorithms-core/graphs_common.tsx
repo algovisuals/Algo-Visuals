@@ -19,25 +19,40 @@ export function generateRandomGraph(length: number, min: number = 0, max: number
 
 
 /**
- * @description Take in existing graph. All nodes have unique ids and random x and y coordinates, where all nodes can be reached.
+ * @description Add random neighbors to existing graph nodes without replacing existing neighbors
  * @param nodes - array of nodes
- * @param maxNeighbors
- * @param minNeighbors
+ * @param maxNeighbors - maximum new neighbors to add
+ * @param minNeighbors - minimum new neighbors to add
  * @returns void
  */
 export function addNeighbors(nodes: Node[], maxNeighbors: number, minNeighbors: number = 1) {
   const nodeCount = nodes.length;
   nodes.forEach((node) => {
-    const neighborsCount = Math.max(Math.floor(Math.random() * (maxNeighbors + 1)), minNeighbors);
-    const neighbors = new Set<Node>();
-    while (neighbors.size < neighborsCount) {
+    // Track existing neighbors to avoid duplicates
+    const existingNeighborIds = new Set(node.neighbors.map(n => n.id));
+    
+    const newNeighborsCount = Math.max(Math.floor(Math.random() * (maxNeighbors + 1)), minNeighbors);
+    const newNeighbors = new Set<Node>();
+    
+    // Try to add the specified number of new neighbors
+    let attempts = 0;
+    const maxAttempts = nodeCount * 2; // Prevent infinite loop
+    
+    while (newNeighbors.size < newNeighborsCount && attempts < maxAttempts) {
+      attempts++;
       const randomIndex = Math.floor(Math.random() * nodeCount);
-      // Ensure we don't add the node itself as a neighbor AND neighbor is not already added
-      if (randomIndex !== parseInt(node.id.split("-")[1]) && !neighbors.has(nodes[randomIndex])) {
-        neighbors.add(nodes[randomIndex]);
+      const potentialNeighbor = nodes[randomIndex];
+      
+      // Skip if trying to add self as neighbor or if already a neighbor
+      if (randomIndex !== parseInt(node.id.split("-")[1]) && 
+          !existingNeighborIds.has(potentialNeighbor.id) && 
+          !newNeighbors.has(potentialNeighbor)) {
+        newNeighbors.add(potentialNeighbor);
       }
     }
-    node.neighbors = Array.from(neighbors);
+    
+    // Append new neighbors to existing ones
+    node.neighbors = [...node.neighbors, ...Array.from(newNeighbors)];
   });
 }
 
