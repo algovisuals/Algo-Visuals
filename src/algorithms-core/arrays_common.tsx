@@ -27,7 +27,7 @@ export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
     if (!svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    const width = 1200;
+    const width = svgRef.current?.clientWidth || 800;
     const height = 400;
 
     let g = svg.select<SVGGElement>("g");

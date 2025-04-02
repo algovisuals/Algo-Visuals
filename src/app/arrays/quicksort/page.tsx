@@ -7,7 +7,7 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/code-side-bar";
 
-const interval_milliseconds = 500; // interval for auto-stepping
+const intervalMilliseconds = 500; // interval for auto-stepping
 
 // algorithms core
 import { generateRandomArray, ArrayVisualizer } from "@/algorithms-core/arrays_common";
@@ -95,7 +95,7 @@ const QuickSortPage: FC = () => {
                 return prevIndex;
               }
             });
-          }, interval_milliseconds);
+          }, intervalMilliseconds);
         }
       } else {
         // Stopping auto-stepping

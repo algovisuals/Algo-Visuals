@@ -20,12 +20,21 @@ describe('generateRandomArray', () => {
   });
 
   test('returns different arrays on multiple calls', () => {
-    const array1 = generateRandomArray(20, 1, 100);
-    const array2 = generateRandomArray(20, 1, 100);
-    
-    // There's a very small chance this could fail randomly
-    // if both arrays happened to be identical by chance
+    // Don't mock Math.random, use the actual implementation
+    const array1 = generateRandomArray(1000, 1, 100);
+    const array2 = generateRandomArray(1000, 1, 100);
+
+    // With a large enough array size, they should be different
     expect(array1).not.toEqual(array2);
+
+    let hasDifference = false;
+    for (let i = 0; i < array1.length; i++) {
+      if (array1[i] !== array2[i]) {
+        hasDifference = true;
+        break;
+      }
+    }
+    expect(hasDifference).toBe(true);
   });
 
   test('generates integer values', () => {
