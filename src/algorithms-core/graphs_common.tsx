@@ -1,126 +1,247 @@
 import * as d3 from "d3";
 import { FC, useEffect, useRef, useState } from "react";
 
-// Add the missing Node interface definition
+// Interface to extend d3.ForceLink to properly type source and target accessors
+interface D3ForceLink<NodeDatum extends d3.SimulationNodeDatum, LinkDatum extends d3.SimulationLinkDatum<NodeDatum>> 
+  extends d3.ForceLink<NodeDatum, LinkDatum> {
+  source(accessor: (d: LinkDatum) => NodeDatum | string | number): this;
+  target(accessor: (d: LinkDatum) => NodeDatum | string | number): this;
+}
+
+// Node interface with outgoing and incoming edge lists
 export interface Node {
   id: string;
   value: number;
-  neighbors: Node[];
+  outgoing_edges: Edge | null; // Head of outgoing edges list
+  incoming_edges: Edge | null; // Head of incoming edges list
   x?: number;
   y?: number;
   fx?: number | null;
   fy?: number | null;
 }
 
-/**
- * @description Generates a random graph with nodes. All nodes have unique ids and random x and y coordinates, where all nodes can be reached. 
- * @param length 
- * @param min 
- * @param max 
- * @returns 
- */
-export function generateRandomGraph(length: number, min: number = 0, max: number = 20): Node[] {
-  return Array.from({ length }, (_, i) => ({
-    id: `node-${i}`,
-    value: Math.floor(Math.random() * (max - min + 1)) + min,
-    neighbors: [],
-  }));
+// Edge interface with doubly-linked list pointers
+export interface Edge extends d3.SimulationLinkDatum<Node> {
+  from_node: Node;
+  to_node: Node;
+  data: any; // Edge data/weight
+  next_from: Edge | null; // Next edge in outgoing list
+  prev_from: Edge | null; // Previous edge in outgoing list
+  next_to: Edge | null;   // Next edge in incoming list
+  prev_to: Edge | null;   // Previous edge in incoming list
+  id: string;            // Unique identifier for the edge
 }
 
-/**
- * @description Add random neighbors to existing graph nodes without replacing existing neighbors
- * @param nodes - array of nodes
- * @param maxNeighbors - maximum new neighbors to add
- * @param minNeighbors - minimum new neighbors to add
- * @returns void
- */
-export function addNeighbors(nodes: Node[], maxNeighbors: number, minNeighbors: number = 1) {
-  const nodeCount = nodes.length;
-  nodes.forEach((node) => {
-    // Track existing neighbors to avoid duplicates
-    const existingNeighborIds = new Set(node.neighbors.map(n => n.id));
-    
-    const newNeighborsCount = Math.max(Math.floor(Math.random() * (maxNeighbors + 1)), minNeighbors);
-    const newNeighbors = new Set<Node>();
-    
-    // Try to add the specified number of new neighbors
-    let attempts = 0;
-    const maxAttempts = nodeCount * 2; // Prevent infinite loop
-    
-    while (newNeighbors.size < newNeighborsCount && attempts < maxAttempts) {
-      attempts++;
-      const randomIndex = Math.floor(Math.random() * nodeCount);
-      const potentialNeighbor = nodes[randomIndex];
+// Graph class to manage nodes and edges
+export class Graph {
+  nodes: Record<string, Node> = {};
+  
+  add_node(node_id: string, value: number): void {
+    if (!this.nodes[node_id]) {
+      this.nodes[node_id] = {
+        id: node_id,
+        value,
+        outgoing_edges: null,
+        incoming_edges: null
+      };
+    }
+  }
+  
+  add_edge(from_id: string, to_id: string, weight: number = 1): Edge | null {
+    if (this.nodes[from_id] && this.nodes[to_id]) {
+      const from_node = this.nodes[from_id];
+      const to_node = this.nodes[to_id];
       
-      // Skip if trying to add self as neighbor or if already a neighbor
-      if (randomIndex !== parseInt(node.id.split("-")[1]) && 
-          !existingNeighborIds.has(potentialNeighbor.id) && 
-          !newNeighbors.has(potentialNeighbor)) {
-        newNeighbors.add(potentialNeighbor);
+      const edge: Edge = {
+        from_node,
+        to_node,
+        data: weight,
+        next_from: null,
+        prev_from: null,
+        next_to: null,
+        prev_to: null,
+        id: `${from_id}-${to_id}`,
+        // Add these properties to satisfy SimulationLinkDatum interface
+        source: from_node,
+        target: to_node
+      };
+      
+      // Add to outgoing list of from_node
+      this._add_to_list(from_node, edge, 'outgoing');
+      
+      // Add to incoming list of to_node
+      this._add_to_list(to_node, edge, 'incoming');
+      
+      return edge;
+    }
+    return null;
+  }
+  
+  _add_to_list(node: Node, edge: Edge, list_type: 'outgoing' | 'incoming'): void {
+    if (list_type === 'outgoing') {
+      if (node.outgoing_edges === null) {
+        node.outgoing_edges = edge;
+      } else {
+        let curr = node.outgoing_edges;
+        while (curr.next_from !== null) {
+          curr = curr.next_from;
+        }
+        curr.next_from = edge;
+        edge.prev_from = curr;
+      }
+    } else { // incoming
+      if (node.incoming_edges === null) {
+        node.incoming_edges = edge;
+      } else {
+        let curr = node.incoming_edges;
+        while (curr.next_to !== null) {
+          curr = curr.next_to;
+        }
+        curr.next_to = edge;
+        edge.prev_to = curr;
       }
     }
-    
-    // Append new neighbors to existing ones
-    node.neighbors = [...node.neighbors, ...Array.from(newNeighbors)];
-  });
-}
-
-export function debugGraph(nodes: Node[]) {
-  nodes.forEach((node) => {
-    console.log(`Node ID: ${node.id}`);
-    console.log(`Value: ${node.value}`);
-    console.log(`Neighbors: ${node.neighbors.map((n) => n.id).join(", ")}`);
-  });
-}
-
-/**
- * @description Creates a connected graph using a randomized spanning tree algorithm
- * @param nodes - array of nodes to be connected
- * @returns void
- */
-export function createConnectedGraph(nodes: Node[]) {
-  if (nodes.length <= 1) return; // Nothing to connect
+  }
   
-  // Step 1: Create a randomized spanning tree to ensure connectivity
-  const connected = new Set<string>();
-  const unconnected = new Set<string>(nodes.map(node => node.id));
-  
-  // Pick a random starting node
-  const startNodeId = nodes[Math.floor(Math.random() * nodes.length)].id;
-  connected.add(startNodeId);
-  unconnected.delete(startNodeId);
-  
-  // Create a map for faster node lookup
-  const nodeMap = new Map<string, Node>();
-  nodes.forEach(node => nodeMap.set(node.id, node));
-  
-  // Connect all nodes randomly
-  while (unconnected.size > 0) {
-    // Pick a random connected node
-    const connectedIds = Array.from(connected);
-    const randomConnectedId = connectedIds[Math.floor(Math.random() * connectedIds.length)];
-    const connectedNode = nodeMap.get(randomConnectedId)!;
-    
-    // Pick a random unconnected node
-    const unconnectedIds = Array.from(unconnected);
-    const randomUnconnectedId = unconnectedIds[Math.floor(Math.random() * unconnectedIds.length)];
-    const unconnectedNode = nodeMap.get(randomUnconnectedId)!;
-    
-    // Connect them
-    if(!connectedNode.neighbors.includes(unconnectedNode)) {
-      connectedNode.neighbors.push(unconnectedNode);
-      unconnectedNode.neighbors.push(connectedNode);
+  remove_edge(from_id: string, to_id: string): void {
+    if (this.nodes[from_id] && this.nodes[to_id]) {
+      const from_node = this.nodes[from_id];
+      const to_node = this.nodes[to_id];
       
-      // Move the newly connected node to the connected set
-      connected.add(randomUnconnectedId);
-      unconnected.delete(randomUnconnectedId);
+      // Remove from outgoing list
+      this._remove_from_list(from_node, to_node, 'outgoing');
+      
+      // Remove from incoming list
+      this._remove_from_list(to_node, from_node, 'incoming');
     }
+  }
+  
+  _remove_from_list(node: Node, other_node: Node, list_type: 'outgoing' | 'incoming'): void {
+    if (list_type === 'outgoing') {
+      let curr = node.outgoing_edges;
+      while (curr !== null) {
+        if (curr.to_node.id === other_node.id) {
+          if (curr.prev_from !== null) {
+            curr.prev_from.next_from = curr.next_from;
+          } else {
+            node.outgoing_edges = curr.next_from;
+          }
+          
+          if (curr.next_from !== null) {
+            curr.next_from.prev_from = curr.prev_from;
+          }
+          break;
+        }
+        curr = curr.next_from;
+      }
+    } else { // incoming
+      let curr = node.incoming_edges;
+      while (curr !== null) {
+        if (curr.from_node.id === other_node.id) {
+          if (curr.prev_to !== null) {
+            curr.prev_to.next_to = curr.next_to;
+          } else {
+            node.incoming_edges = curr.next_to;
+          }
+          
+          if (curr.next_to !== null) {
+            curr.next_to.prev_to = curr.prev_to;
+          }
+          break;
+        }
+        curr = curr.next_to;
+      }
+    }
+  }
+  
+  // Get all edges in the graph as a flat array for visualization
+  get_all_edges(): Edge[] {
+    const edges: Edge[] = [];
+    const visited = new Set<string>();
+    
+    Object.values(this.nodes).forEach(node => {
+      let edge = node.outgoing_edges;
+      while (edge !== null) {
+        if (!visited.has(edge.id)) {
+          edges.push(edge);
+          visited.add(edge.id);
+        }
+        edge = edge.next_from;
+      }
+    });
+    
+    return edges;
   }
 }
 
+// Function to create a random graph
+export function createRandomGraph(nodeCount: number, edgeDensity: number = 0.3, minValue: number = 1, maxValue: number = 20): Graph {
+  const graph = new Graph();
+  
+  // Create nodes
+  for (let i = 0; i < nodeCount; i++) {
+    const value = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+    graph.add_node(`node-${i}`, value);
+  }
+  
+  // Create random edges
+  const nodeIds = Object.keys(graph.nodes);
+  const maxEdges = Math.floor(nodeCount * (nodeCount - 1) * edgeDensity);
+  
+  // Ensure the graph is connected (minimum spanning tree)
+  const connected = new Set<string>();
+  const unconnected = new Set<string>(nodeIds);
+  
+  // Start with a random node
+  const startNodeId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
+  connected.add(startNodeId);
+  unconnected.delete(startNodeId);
+  
+  // Connect all nodes
+  while (unconnected.size > 0) {
+    const fromId = Array.from(connected)[Math.floor(Math.random() * connected.size)];
+    const toId = Array.from(unconnected)[Math.floor(Math.random() * unconnected.size)];
+    
+    const weight = Math.floor(Math.random() * 10) + 1;
+    graph.add_edge(fromId, toId, weight);
+    
+    connected.add(toId);
+    unconnected.delete(toId);
+  }
+  
+  // Add additional random edges up to desired density
+  let edgeCount = nodeCount - 1; // Already added n-1 edges for connectivity
+  
+  while (edgeCount < maxEdges) {
+    const fromId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
+    const toId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
+    
+    // Skip self-loops
+    if (fromId === toId) continue;
+    
+    // Check if edge already exists
+    let existingEdge = false;
+    let curr = graph.nodes[fromId].outgoing_edges;
+    
+    while (curr !== null) {
+      if (curr.to_node.id === toId) {
+        existingEdge = true;
+        break;
+      }
+      curr = curr.next_from;
+    }
+    
+    if (!existingEdge) {
+      const weight = Math.floor(Math.random() * 10) + 1;
+      graph.add_edge(fromId, toId, weight);
+      edgeCount++;
+    }
+  }
+  
+  return graph;
+}
 
-const debugData = generateRandomGraph(5, 1, 10);
-
+// Highlight interfaces
 export interface NodeHighlight {
   nodeId: string;
   color: string;
@@ -132,45 +253,47 @@ export interface EdgeHighlight {
   color: string;
 }
 
+// GraphVisualizer props interface
 export interface GraphVisualizerProps {
   width: number;
   height: number;
-  data: Node[];
+  graph: Graph;
   highlightedNodes?: NodeHighlight[];
   highlightedEdges?: EdgeHighlight[];
 }
 
+// Main GraphVisualizer component
 export const GraphVisualizer: FC<GraphVisualizerProps> = ({
   width,
   height,
-  data,
+  graph,
   highlightedNodes = [],
   highlightedEdges = []
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const simulationRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width, height });
   const [isDarkMode, setIsDarkMode] = useState(
     typeof window !== 'undefined' && window.matchMedia && 
     window.matchMedia('(prefers-color-scheme: dark)').matches
   );
 
-  // Initialization: run only when data/dimensions/theme change.
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
     const { width, height } = dimensions;
+    const nodes = Object.values(graph.nodes);
+    const edges = graph.get_all_edges();
 
-    // Build lookup maps from the props for faster access.
+    // Build lookup maps for highlights
     const highlightedNodesMap = new Map<string, string>();
     highlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
+    
     const highlightedEdgesMap = new Map<string, string>();
     highlightedEdges.forEach(hl => {
       highlightedEdgesMap.set(`${hl.sourceId}-${hl.targetId}`, hl.color);
-      highlightedEdgesMap.set(`${hl.targetId}-${hl.sourceId}`, hl.color);
     });
 
     // Theme-based colors
@@ -247,41 +370,24 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
         .attr("stop-color", hl.color);
     });
     
-    // Create links array from the neighbors relationships
-    interface Link {
-      source: Node;
-      target: Node;
-      id: string; // unique ID for the link
-    }
-    
-    const links: Link[] = [];
-    data.forEach(node => {
-      node.neighbors.forEach(neighbor => {
-        // Only add each link once to avoid duplicates
-        if (node.id < neighbor.id) {
-          links.push({
-            source: node,
-            target: neighbor,
-            id: `${node.id}-${neighbor.id}` // for highlight lookup
-          });
-        }
-      });
-    });
-    
     // Create D3 selections with improved styling
     const linkGroup = svg.append("g");
     
     const link = linkGroup
       .selectAll("line")
-      .data(links)
+      .data(edges)
       .join("line")
       .attr("stroke", d => {
-        // Check if this edge is highlighted
         const highlightColor = highlightedEdgesMap.get(d.id);
         return highlightColor || defaultLinkColor;
       })
       .attr("stroke-opacity", d => highlightedEdgesMap.has(d.id) ? 0.8 : 0.5)
-      .attr("stroke-width", d => highlightedEdgesMap.has(d.id) ? 2.5 : 1.5)
+      .attr("stroke-width", d => {
+        // Use edge.data as weight
+        const weight = typeof d.data === 'number' ? d.data : 1;
+        const baseWidth = highlightedEdgesMap.has(d.id) ? 2.5 : 1.5;
+        return baseWidth * Math.sqrt(weight) / 2;
+      })
       .attr("stroke-linecap", "round");
     
     // Add node shadows for depth
@@ -321,7 +427,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       26, // Max radius
       Math.max(
         18, // Min radius
-        Math.min(width, height) / (Math.sqrt(data.length) * 3)
+        Math.min(width, height) / (Math.sqrt(nodes.length) * 3)
       )
     );
     
@@ -329,7 +435,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
 
     const node = nodeGroup
       .selectAll("circle")
-      .data(data)
+      .data(nodes)
       .join("circle")
       .attr("r", nodeRadius)
       .attr("fill", d => 
@@ -347,13 +453,13 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended) as any);
-
+    
     // Calculate appropriate font size based on node radius
     const fontSize = Math.max(10, Math.min(14, nodeRadius * 0.6));
     
     const text = svg.append("g")
       .selectAll("text")
-      .data(data)
+      .data(nodes)
       .join("text")
       .text(d => d.value.toString())
       .attr("font-size", `${fontSize}px`)
@@ -363,7 +469,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .attr("dy", "0.35em");
     
     // Calculate appropriate force parameters based on container size
-    const optimalLinkDistance = Math.min(width, height) / Math.max(4, Math.sqrt(data.length));
+    const optimalLinkDistance = Math.min(width, height) / Math.max(4, Math.sqrt(nodes.length));
     const chargeStrength = -Math.min(
       1000, // Increased max strength for better spreading
       Math.max(
@@ -371,20 +477,38 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
         Math.min(width, height) / 2
       )
     );
+
     
-    // Set up force simulation with improved forces for better spreading
-    const simulation = d3.forceSimulation<Node>(data)
+    
+    // Set up force simulation with our edge structure
+    const simulation = d3.forceSimulation<Node>(nodes)
       .force("center", d3.forceCenter(width / 2, height / 2).strength(0.1))
-      .force("link", d3.forceLink<Node, Link>(links)
-        .distance(optimalLinkDistance)
-        .strength(0.7))
+      .force("link", (() => {
+        // Create forceLink and cast it to our extended interface
+        const forceLink = d3.forceLink<Node, Edge>(edges)
+          .id(d => d.id) as D3ForceLink<Node, Edge>;
+          
+        // Now TypeScript won't complain about these methods
+        return forceLink
+          .source(d => d.from_node)
+          .target(d => d.to_node)
+          .distance(d => {
+            // Heavier edges pull nodes closer together
+            const weight = typeof d.data === 'number' ? d.data : 1;
+            return optimalLinkDistance / Math.sqrt(weight);
+          })
+          .strength(d => {
+            const weight = typeof d.data === 'number' ? d.data : 1;
+            return 0.5 + (weight / 10);
+          });
+      })())
       .force("charge", d3.forceManyBody().strength(chargeStrength))
       .force("collide", d3.forceCollide<Node>().radius(nodeRadius * 1.8).strength(0.95))
       .force("bounds", () => {
         // Dynamic padding based on container size
         const padding = Math.max(nodeRadius * 2, Math.min(width, height) * 0.08);
         
-        for (const node of data) {
+        for (const node of nodes) {
           // Keep nodes within bounds
           if (node.x! < padding) node.x = padding;
           if (node.x! > width - padding) node.x = width - padding;
@@ -416,10 +540,10 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     // Update positions on tick
     simulation.on("tick", () => {
       link
-        .attr("x1", d => d.source.x || 0)
-        .attr("y1", d => d.source.y || 0)
-        .attr("x2", d => d.target.x || 0)
-        .attr("y2", d => d.target.y || 0);
+        .attr("x1", d => d.from_node.x || 0)
+        .attr("y1", d => d.from_node.y || 0)
+        .attr("x2", d => d.to_node.x || 0)
+        .attr("y2", d => d.to_node.y || 0);
         
       node
         .attr("cx", d => d.x || 0)
@@ -434,9 +558,9 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     return () => {
       simulation.stop();
     };
-  }, [data, dimensions, isDarkMode, highlightedNodes, highlightedEdges]);
+  }, [graph, dimensions, isDarkMode, highlightedNodes, highlightedEdges]);
   
-  // Separate effect: update highlights only.
+  // Separate effect: update highlights only
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -447,7 +571,6 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const highlightedEdgesMap = new Map<string, string>();
     highlightedEdges.forEach(hl => {
       highlightedEdgesMap.set(`${hl.sourceId}-${hl.targetId}`, hl.color);
-      highlightedEdgesMap.set(`${hl.targetId}-${hl.sourceId}`, hl.color);
     });
 
     // Update node selection individually without removing them
@@ -456,18 +579,23 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .attr("fill", (d: Node) => 
         highlightedNodesMap.has(d.id) ? `url(#gradient-node-${d.id})` : "url(#gradient-node)"
       )
+      .attr("filter", d => highlightedNodesMap.has(d.id) ? "url(#glow)" : "url(#shadow)")
       .attr("stroke", (d: Node) => 
         highlightedNodesMap.has(d.id) ? highlightedNodesMap.get(d.id)! : "white"
       );
 
-    // Update links similarly with proper type cast. For example:
-    svg.selectAll<SVGLineElement, { id: string }>("line")
+    // Update links similarly with proper type cast
+    svg.selectAll<SVGLineElement, Edge>("line")
       .transition().duration(300)
-      .attr("stroke", (d: { id: string }) => {
+      .attr("stroke", (d: Edge) => {
         const highlightColor = highlightedEdgesMap.get(d.id);
         return highlightColor ? highlightColor : (isDarkMode ? 'hsl(220, 13%, 45%)' : 'hsl(220, 13%, 75%)');
       })
-      .attr("stroke-width", (d: { id: string }) => highlightedEdgesMap.has(d.id) ? 2.5 : 1.5);
+      .attr("stroke-width", (d: Edge) => {
+        const weight = typeof d.data === 'number' ? d.data : 1;
+        const baseWidth = highlightedEdgesMap.has(d.id) ? 2.5 : 1.5;
+        return baseWidth * Math.sqrt(weight) / 2;
+      });
   }, [highlightedNodes, highlightedEdges, isDarkMode]);
 
   // Handle responsive sizing
