@@ -1,4 +1,4 @@
-import { Node } from "./graphs_common";
+import { Graph, Node, Edge } from "./graphs_common";
 
 export interface DijkstraStep {
   currentNodeId: string | null; // The node currently being processed (null for initial step)
@@ -28,16 +28,19 @@ export function findNodeWithSmallestDistance(
   nodeSet: Set<string>, 
   distanceMap: Map<string, number>
 ): string | null {
+  if (nodeSet.size === 0) return null;
+  
   let minDistance = Infinity;
   let minNodeId: string | null = null;
   
-  for (const nodeId of nodeSet) {
-    const distance = distanceMap.get(nodeId) || Infinity;
-    if (distance < minDistance) {
+  // Debug the node set and distances
+  nodeSet.forEach(nodeId => {
+    const distance = distanceMap.get(nodeId);
+    if (distance !== undefined && distance < minDistance) {
       minDistance = distance;
       minNodeId = nodeId;
     }
-  }
+  });
   
   return minNodeId;
 }
@@ -64,41 +67,11 @@ export function createDijkstraStep(
 }
 
 /**
- * Initializes the data structures needed for Dijkstra's algorithm
- */
-export function initializeDijkstra(
-  nodes: Node[], 
-  startNodeId: string
-): {
-  nodeMap: Map<string, Node>,
-  distances: Map<string, number>,
-  previous: Map<string, string | null>,
-  visited: Set<string>,
-  unvisited: Set<string>
-} {
-  const nodeMap = new Map<string, Node>();
-  nodes.forEach(node => nodeMap.set(node.id, node));
-  
-  const distances = new Map<string, number>();
-  const previous = new Map<string, string | null>();
-  const visited = new Set<string>();
-  const unvisited = new Set<string>();
-  
-  // Initialize all nodes with infinity distance except the start node
-  nodes.forEach(node => {
-    distances.set(node.id, node.id === startNodeId ? 0 : Infinity);
-    previous.set(node.id, null);
-    unvisited.add(node.id);
-  });
-  
-  return { nodeMap, distances, previous, visited, unvisited };
-}
-
-/**
  * Reconstructs the shortest path from start to end using the previous node map
  */
 export function reconstructPath(
   endNodeId: string,
+  startNodeId: string,
   previous: Map<string, string | null>,
   distances: Map<string, number>
 ): { path: string[] | null, distance: number | null } {
@@ -112,7 +85,13 @@ export function reconstructPath(
     // Build the path from end to start, then reverse
     while (current !== null) {
       path.unshift(current);
+      if (current === startNodeId) break; // Stop when we reach the start node
       current = previous.get(current) || null;
+    }
+    
+    // If path doesn't contain start node, it means there's no valid path
+    if (path[0] !== startNodeId) {
+      return { path: null, distance: null };
     }
     
     return { path, distance: endNodeDistance };
@@ -122,26 +101,31 @@ export function reconstructPath(
 }
 
 /**
- * Implementation of Dijkstra's algorithm to find the shortest path in a weighted graph.
- * The weight of an edge from A to B is determined by the value of node B.
+ * Implementation of Dijkstra's algorithm to find the shortest paths from a source node to all other nodes.
+ * The weight of an edge is determined by the 'data' property of the edge.
  * 
- * @param nodes - The graph nodes
+ * @param graph - The graph object containing nodes and edges
  * @param startNodeId - The ID of the starting node
- * @param endNodeId - The ID of the destination node (optional)
  * @returns The algorithm steps and result
  */
-export function dijkstra(nodes: Node[], startNodeId: string, endNodeId?: string): DijkstraResult {
-  // Validate inputs
-  if (!nodes.some(node => node.id === startNodeId)) {
+export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
+  // Validate input
+  if (!graph.nodes[startNodeId]) {
     throw new Error(`Start node ${startNodeId} not found in the graph`);
   }
   
-  if (endNodeId && !nodes.some(node => node.id === endNodeId)) {
-    throw new Error(`End node ${endNodeId} not found in the graph`);
-  }
-  
   // Initialize data structures
-  const { nodeMap, distances, previous, visited, unvisited } = initializeDijkstra(nodes, startNodeId);
+  const distances = new Map<string, number>();
+  const previous = new Map<string, string | null>();
+  const visited = new Set<string>();
+  const unvisited = new Set<string>();
+  
+  // Initialize all nodes with infinity distance except the start node
+  Object.keys(graph.nodes).forEach(nodeId => {
+    distances.set(nodeId, nodeId === startNodeId ? 0 : Infinity);
+    previous.set(nodeId, null);
+    unvisited.add(nodeId);
+  });
   
   // Steps for visualization
   const steps: DijkstraStep[] = [];
@@ -156,56 +140,75 @@ export function dijkstra(nodes: Node[], startNodeId: string, endNodeId?: string)
     unvisited
   ));
   
-  // Main algorithm loop
+  // For debugging: log the starting distance map
+  console.log("Initial distances:", [...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', '));
+  
+  // Main algorithm loop - continue until all nodes are visited or no more nodes are reachable
   while (unvisited.size > 0) {
     // Find the unvisited node with the smallest distance
     const currentNodeId = findNodeWithSmallestDistance(unvisited, distances);
     
-    // If no reachable node or the smallest distance is infinity,
-    // it means there's no path to the remaining nodes
-    if (currentNodeId === null || distances.get(currentNodeId) === Infinity) {
+    // If no reachable node, we're done
+    if (currentNodeId === null) {
+      console.log("No reachable node found, breaking the loop");
       break;
     }
     
-    // If we reached the target node, we can record this step before breaking
-    if (endNodeId && currentNodeId === endNodeId) {
-      // Record this final step before stopping
-      steps.push(createDijkstraStep(
-        currentNodeId,
-        null, // No next node as we're stopping
-        distances,
-        previous,
-        visited,
-        unvisited
-      ));
+    // Get the current distance - this must be from the distances map
+    const currentDistance = distances.get(currentNodeId)!;
+    
+    // For debugging: log the current node and its distance
+    console.log(`Processing node ${currentNodeId} with distance ${currentDistance}`);
+    
+    // If the closest node has infinite distance, no more nodes are reachable
+    if (currentDistance === Infinity) {
+      console.log("Closest node has infinite distance, breaking the loop");
       break;
     }
     
-    const currentNode = nodeMap.get(currentNodeId)!;
-    const currentDistance = distances.get(currentNodeId) || Infinity;
-    
-    // Mark as visited
-    visited.add(currentNodeId);
+    // Remove the current node from unvisited and add to visited
     unvisited.delete(currentNodeId);
+    visited.add(currentNodeId);
     
-    // Update distances to all neighbors
-    for (const neighbor of currentNode.neighbors) {
-      if (!visited.has(neighbor.id)) {
-        // Use the neighbor's value as the edge weight
-        const edgeWeight = neighbor.value;
-        const tentativeDistance = currentDistance + edgeWeight;
-        
-        if (tentativeDistance < (distances.get(neighbor.id) || Infinity)) {
-          distances.set(neighbor.id, tentativeDistance);
-          previous.set(neighbor.id, currentNodeId);
-        }
+    // Get the current node from the graph
+    const currentNode = graph.nodes[currentNodeId];
+    
+    // Process all outgoing edges from the current node to update distances
+    let edge = currentNode.outgoing_edges;
+    console.log(`Checking outgoing edges from ${currentNodeId}:`);
+    
+    while (edge !== null) {
+      const neighborId = edge.to_node.id;
+      
+      // Get the weight of the edge (use 1 as default if not a number)
+      const weight = typeof edge.data === 'number' ? edge.data : 1;
+      const newDistance = currentDistance + weight;
+      
+      console.log(`  Edge to ${neighborId} with weight ${weight} gives new distance ${newDistance}`);
+      console.log(`  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
+      
+      // If we found a shorter path, update the distance and previous node
+      const currentNeighborDistance = distances.get(neighborId) || Infinity;
+      if (newDistance < currentNeighborDistance) {
+        console.log(`  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
+        distances.set(neighborId, newDistance);
+        previous.set(neighborId, currentNodeId);
+      } else {
+        console.log(`  No update needed for ${neighborId}`);
       }
+      
+      // Move to the next outgoing edge
+      edge = edge.next_from;
     }
     
-    // Find the next node with the smallest distance for visualization
+    // Find the next node for visualization
     const nextNodeId = findNodeWithSmallestDistance(unvisited, distances);
+    console.log(`Next node to process: ${nextNodeId}`);
+    console.log(`Current distances: ${[...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
+    console.log(`Visited nodes: ${Array.from(visited).join(', ')}`);
+    console.log(`Unvisited nodes: ${Array.from(unvisited).join(', ')}`);
     
-    // Record this step
+    // Record the current step
     steps.push(createDijkstraStep(
       currentNodeId,
       nextNodeId,
@@ -216,21 +219,15 @@ export function dijkstra(nodes: Node[], startNodeId: string, endNodeId?: string)
     ));
   }
   
-  // Reconstruct the shortest path if an end node was specified
-  let shortestPath: string[] | null = null;
-  let totalDistance: number | null = null;
-  
-  if (endNodeId) {
-    const pathResult = reconstructPath(endNodeId, previous, distances);
-    shortestPath = pathResult.path;
-    totalDistance = pathResult.distance;
-  }
+  console.log("Algorithm completed");
+  console.log(`Final distances: ${[...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
+  console.log(`Final previous map: ${[...previous.entries()].map(([k,v]) => `${k}->${v}`).join(', ')}`);
   
   return {
     steps,
     distances,
     previous,
-    shortestPath,
-    totalDistance
+    shortestPath: null,
+    totalDistance: null
   };
 }

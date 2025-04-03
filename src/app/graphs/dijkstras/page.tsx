@@ -5,19 +5,16 @@ import React, { useState, FC, useRef, useEffect } from "react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { dijkstra, DijkstraStep, DijkstraResult } from "@/algorithms-core/dijkstras";
-
 import { 
-  generateRandomGraph, 
-  addNeighbors, 
-  createConnectedGraph, 
   GraphVisualizer, 
-  GraphVisualizerProps,
   NodeHighlight,
-  EdgeHighlight 
+  EdgeHighlight,
+  createRandomGraph,
+  Graph
 } from "@/algorithms-core/graphs_common";
 
 const DijkstrasPage: FC = () => {
-  const [graphData, setGraphData] = useState<GraphVisualizerProps["data"]>([]);
+  const [graph, setGraph] = useState<Graph | null>(null);
   const [highlightedNodes, setHighlightedNodes] = useState<NodeHighlight[]>([]);
   const [highlightedEdges, setHighlightedEdges] = useState<EdgeHighlight[]>([]);
   const [startNodeId, setStartNodeId] = useState<string | null>(null);
@@ -29,115 +26,67 @@ const DijkstrasPage: FC = () => {
   const autoPlayIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize graph
+  // Initialize graph on mount
   useEffect(() => {
-    // Create a larger graph with more connections for better visualization
-    const nodes = generateRandomGraph(10, 1, 10); // Use smaller weights (1-5) for better paths
-    createConnectedGraph(nodes);
-    
-    // Debug the graph
-    console.log("Generated graph with", nodes.length, "nodes");
-    nodes.forEach(node => {
-      console.log(`Node ${node.id} has ${node.neighbors.length} neighbors: ${node.neighbors.map(n => n.id).join(', ')}`);
-    });
-    
-    setGraphData(nodes);
-    
-    if (nodes.length > 0) {
-      // Try to select nodes that are far apart
-      const startIndex = 0;
-      const endIndex = nodes.length - 1;
-      
-      setStartNodeId(nodes[startIndex].id);
-      setEndNodeId(nodes[endIndex].id);
-      
-      // Highlight start and end nodes
+    const newGraph = createRandomGraph(10, 1, 10);
+    setGraph(newGraph);
+    // Set start and end from the available node keys
+    const nodeIds = Object.keys(newGraph.nodes);
+    if (nodeIds.length > 0) {
+      setStartNodeId(nodeIds[0]);
+      setEndNodeId(nodeIds[nodeIds.length - 1]);
       setHighlightedNodes([
-        { nodeId: nodes[startIndex].id, color: 'hsl(120, 100%, 40%)' }, // Start node (green)
-        { nodeId: nodes[endIndex].id, color: 'hsl(0, 100%, 50%)' }      // End node (red)
+        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" }, // Start (green)
+        { nodeId: nodeIds[nodeIds.length - 1], color: "hsl(0,100%,50%)" } // End (red)
       ]);
     }
   }, []);
 
-  // Run Dijkstra's algorithm
   const handleRunDijkstra = () => {
-    if (!startNodeId || !endNodeId || graphData.length === 0) {
-      console.error("Missing start or end node, or no graph data");
+    if (!startNodeId || !endNodeId || !graph) {
+      console.error("Missing start or end node, or no graph");
       return;
     }
-    
-    // Log the graph for debugging
-    console.log("Graph data:", graphData);
-    console.log("Start node:", startNodeId, "End node:", endNodeId);
-    
+
     try {
-      // Create more connected graph for better visualizations
-      const nodes = [...graphData];
-      // Ensure enough edges by adding more neighbors if needed
-      addNeighbors(nodes, 1, 1);
-      
-      // Run Dijkstra's algorithm
-      const result = dijkstra(nodes, startNodeId, endNodeId);
-      console.log("Algorithm result - number of steps:", result.steps.length);
-      console.log("Shortest path:", result.shortestPath);
-      console.log("Total distance:", result.totalDistance);
-      
-      setGraphData(nodes);
+      const result = dijkstra(graph, startNodeId);
+      console.log("Dijkstra algorithm completed. Steps:", result.steps.length);
       setAlgorithmResult(result);
       setCurrentStepIndex(0);
       setIsRunning(true);
-      
-      // Pass the result directly to the visualization function
       updateVisualization(result.steps[0], result);
     } catch (error) {
       console.error("Error running Dijkstra's algorithm:", error);
     }
   };
 
-  // Reset the graph and algorithm state
   const handleResetGraph = () => {
-    // Stop auto-play if running
     if (autoPlayIntervalRef.current) {
       clearInterval(autoPlayIntervalRef.current);
       autoPlayIntervalRef.current = null;
       setIsAutoPlaying(false);
     }
-    
     setIsRunning(false);
     setCurrentStepIndex(0);
     setAlgorithmResult(null);
-    
-    // Generate a new graph
-    const nodes = generateRandomGraph(10, 1, 10); 
-    createConnectedGraph(nodes);
-    setGraphData(nodes);
-    
-    if (nodes.length > 0) {
-      // Set random start and end nodes
-      const startIndex = Math.floor(Math.random() * nodes.length);
-      let endIndex;
-      do {
-        endIndex = Math.floor(Math.random() * nodes.length);
-      } while (endIndex === startIndex);
-      
-      setStartNodeId(nodes[startIndex].id);
-      setEndNodeId(nodes[endIndex].id);
-      
-      // Highlight start and end nodes
+
+    const newGraph = createRandomGraph(10, 1, 10);
+    setGraph(newGraph);
+    const nodeIds = Object.keys(newGraph.nodes);
+    if (nodeIds.length > 0) {
+      setStartNodeId(nodeIds[0]);
+      setEndNodeId(nodeIds[nodeIds.length - 1]);
       setHighlightedNodes([
-        { nodeId: nodes[startIndex].id, color: 'hsl(120, 100%, 40%)' }, // Start node (green)
-        { nodeId: nodes[endIndex].id, color: 'hsl(0, 100%, 50%)' }      // End node (red)
+        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" },
+        { nodeId: nodeIds[nodeIds.length - 1], color: "hsl(0,100%,50%)" }
       ]);
-      
       setHighlightedEdges([]);
     }
   };
 
-  // Toggle auto-play for the algorithm
   const handleToggleAutoPlay = () => {
     if (!algorithmResult) return;
-    
-    // If already auto-playing, stop it
+
     if (isAutoPlaying) {
       if (autoPlayIntervalRef.current) {
         clearInterval(autoPlayIntervalRef.current);
@@ -146,22 +95,19 @@ const DijkstrasPage: FC = () => {
       setIsAutoPlaying(false);
       return;
     }
-    
-    // Start auto-play
+
     setIsAutoPlaying(true);
-    
-    // Handle case where we're at the end already
+
+    // If already at the end, start over
     if (currentStepIndex >= algorithmResult.steps.length - 1) {
       setCurrentStepIndex(0);
       updateVisualization(algorithmResult.steps[0], algorithmResult);
     }
-    
+
     autoPlayIntervalRef.current = setInterval(() => {
       setCurrentStepIndex(prevIndex => {
         const nextIndex = prevIndex + 1;
-        
-        // If we've reached the end, stop auto-play
-        if (nextIndex >= algorithmResult.steps.length) {
+        if (nextIndex >= algorithmResult!.steps.length) {
           if (autoPlayIntervalRef.current) {
             clearInterval(autoPlayIntervalRef.current);
             autoPlayIntervalRef.current = null;
@@ -169,123 +115,111 @@ const DijkstrasPage: FC = () => {
           setIsAutoPlaying(false);
           return prevIndex;
         }
-        
-        // Update visualization with the next step
-        updateVisualization(algorithmResult.steps[nextIndex], algorithmResult);
+        updateVisualization(algorithmResult!.steps[nextIndex], algorithmResult!);
         return nextIndex;
       });
-    }, 750); // Adjust speed here
+    }, 750);
   };
 
-  // Step forward in the algorithm
   const handleStepForward = () => {
     if (!algorithmResult || currentStepIndex >= algorithmResult.steps.length - 1) return;
-    
     const nextStepIndex = currentStepIndex + 1;
     setCurrentStepIndex(nextStepIndex);
     updateVisualization(algorithmResult.steps[nextStepIndex], algorithmResult);
   };
 
-  // Step backward in the algorithm
   const handleStepBackward = () => {
     if (!algorithmResult || currentStepIndex <= 0) return;
-    
     const prevStepIndex = currentStepIndex - 1;
     setCurrentStepIndex(prevStepIndex);
     updateVisualization(algorithmResult.steps[prevStepIndex], algorithmResult);
   };
 
-  // Update visualization based on the current algorithm step
   const updateVisualization = (step: DijkstraStep, resultToUse?: DijkstraResult) => {
     const result = resultToUse || algorithmResult;
-    
     if (!startNodeId || !endNodeId || !result) {
       console.error("Cannot update visualization: missing data");
       return;
     }
-    
+
     console.log("Updating visualization for step:", currentStepIndex);
-    console.log("Current step data:", {
+    console.log("Step data:", {
       currentNodeId: step.currentNodeId,
       visitedCount: step.visited.size,
       unvisitedCount: step.unvisited.size
     });
-    
+
     const newHighlightedNodes: NodeHighlight[] = [];
     const newHighlightedEdges: EdgeHighlight[] = [];
-    
-    // Always highlight start and end nodes
+
+    // Always highlight start and end nodes.
     newHighlightedNodes.push(
-      { nodeId: startNodeId, color: 'hsl(120, 100%, 40%)' }, // Start node (green)
-      { nodeId: endNodeId, color: 'hsl(0, 100%, 50%)' }      // End node (red)
+      { nodeId: startNodeId, color: "hsl(120,100%,40%)" },
+      { nodeId: endNodeId, color: "hsl(0,100%,50%)" }
     );
-    
-    // Highlight the current node being processed using a border.
+
+    // Highlight current processing node.
     if (step.currentNodeId) {
       newHighlightedNodes.push({
         nodeId: step.currentNodeId,
-        color: 'hsl(270, 100%, 70%)', // Purple color instead of transparent
-        border: '2px solid purple' // Border highlight for current node.
-      } as any);
+        color: "hsl(270,100%,70%)"
+      });
     }
-    
-    // Visited nodes in blue
+
+    // Mark visited nodes in blue.
     step.visited.forEach(nodeId => {
       if (nodeId !== startNodeId && nodeId !== endNodeId && nodeId !== step.currentNodeId) {
         newHighlightedNodes.push({
           nodeId,
-          color: 'hsl(210, 100%, 50%)' // Blue for visited nodes.
+          color: "hsl(210,100%,50%)"
         });
       }
     });
-    
-    // Next shortest (unvisited) node in yellow
+
+    // Highlight next shortest (unvisited) node in yellow.
     if (step.currentShortest && step.currentShortest !== startNodeId && step.currentShortest !== endNodeId) {
       newHighlightedNodes.push({
         nodeId: step.currentShortest,
-        color: 'hsl(45, 100%, 50%)' // Yellow for next shortest node.
+        color: "hsl(45,100%,50%)"
       });
     }
-    
-    // Show gold shortest path only on the final step
+
+    // If the shortest path has been reconstructed on the final step, highlight that path in gold.
     if (result.shortestPath && currentStepIndex === result.steps.length - 1) {
       const path = result.shortestPath;
-      // Intermediate nodes shown in gold
       for (let i = 1; i < path.length - 1; i++) {
         if (!newHighlightedNodes.some(hl => hl.nodeId === path[i])) {
           newHighlightedNodes.push({
             nodeId: path[i],
-            color: 'gold'
+            color: "gold"
           });
         }
       }
-      // Processed edges in gold
       for (let i = 0; i < path.length - 1; i++) {
         newHighlightedEdges.push({
           sourceId: path[i],
           targetId: path[i + 1],
-          color: 'gold'
+          color: "gold"
         });
       }
     } else {
-      // Processed edges (relaxed in current step) shown in blue.
+      // Otherwise, add edges representing the relaxed paths.
       step.visited.forEach(nodeId => {
         const prevNodeId = step.previous.get(nodeId);
         if (prevNodeId) {
           newHighlightedEdges.push({
             sourceId: prevNodeId,
             targetId: nodeId,
-            color: 'hsl(210, 100%, 50%)'
+            color: "hsl(210,100%,50%)"
           });
         }
       });
     }
-    
+
     setHighlightedNodes(newHighlightedNodes);
     setHighlightedEdges(newHighlightedEdges);
   };
 
-  // Clean up auto-play interval on component unmount
   useEffect(() => {
     return () => {
       if (autoPlayIntervalRef.current) {
@@ -311,13 +245,15 @@ const DijkstrasPage: FC = () => {
             
             <div className="p-4">
               <div ref={containerRef} className="w-full h-[600px]">
-                <GraphVisualizer 
-                  width={0} 
-                  height={0} 
-                  data={graphData} 
-                  highlightedNodes={highlightedNodes}
-                  highlightedEdges={highlightedEdges}
-                />
+                {graph && 
+                  <GraphVisualizer 
+                    width={0} 
+                    height={0} 
+                    graph={graph} 
+                    highlightedNodes={highlightedNodes}
+                    highlightedEdges={highlightedEdges}
+                  />
+                }
               </div>
             </div>
             
@@ -330,7 +266,7 @@ const DijkstrasPage: FC = () => {
                     </p>
                     {algorithmResult.shortestPath && currentStepIndex === algorithmResult.steps.length - 1 && (
                       <p className="text-sm text-slate-600 dark:text-slate-300">
-                        Shortest path length: {algorithmResult.totalDistance}
+                        Shortest Path Length: {algorithmResult.totalDistance}
                       </p>
                     )}
                   </div>
@@ -357,7 +293,7 @@ const DijkstrasPage: FC = () => {
                       <button 
                         className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
                         onClick={handleStepForward}
-                        disabled={currentStepIndex >= (algorithmResult?.steps.length || 0) - 1}
+                        disabled={!!algorithmResult && currentStepIndex >= (algorithmResult.steps.length - 1)}
                       >
                         Next Step
                       </button>
@@ -405,6 +341,7 @@ const DijkstrasPage: FC = () => {
                 )}
               </div>
             </div>
+
           </div>
         </div>
       </main>
