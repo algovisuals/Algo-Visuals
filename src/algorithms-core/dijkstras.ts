@@ -188,7 +188,7 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
       console.log(`  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
       
       // If we found a shorter path, update the distance and previous node
-      const currentNeighborDistance = distances.get(neighborId) || Infinity;
+      const currentNeighborDistance = distances.has(neighborId) ? distances.get(neighborId)! : Infinity;
       if (newDistance < currentNeighborDistance) {
         console.log(`  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
         distances.set(neighborId, newDistance);

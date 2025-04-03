@@ -344,4 +344,36 @@ describe('Dijkstra Algorithm', () => {
       console.log(`  Unvisited: ${Array.from(step.unvisited).join(', ')}`);
     });
   });
+  
+  test('should process all nodes when the graph is fully connected', () => {
+    const graph = new Graph();
+    
+    // Create nodes
+    graph.add_node("A", 0);
+    graph.add_node("B", 0);
+    graph.add_node("C", 0);
+    graph.add_node("D", 0);
+    
+    // Fully connect the nodes (undirected graph simulated using reverse edges)
+    graph.add_edge("A", "B", 2);
+    graph.add_edge("A", "C", 5);
+    graph.add_edge("B", "C", 1);
+    graph.add_edge("B", "D", 4);
+    graph.add_edge("C", "D", 2);
+
+    // Reverse edges to ensure connectivity in both directions
+    graph.add_edge("B", "A", 2);
+    graph.add_edge("C", "A", 5);
+    graph.add_edge("C", "B", 1);
+    graph.add_edge("D", "B", 4);
+    graph.add_edge("D", "C", 2);
+    
+    const result = dijkstra(graph, "A");
+    
+    // Assert that all nodes have finite distances
+    expect(result.distances.get("A")).toBe(0);
+    expect(result.distances.get("B")).toBe(2);
+    expect(result.distances.get("C")).toBe(3);  // A -> B -> C : 2 + 1
+    expect(result.distances.get("D")).toBe(5);  // A -> B -> C -> D : 2 + 1 + 2
+  });
 });

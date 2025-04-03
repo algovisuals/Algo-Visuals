@@ -174,7 +174,14 @@ export class Graph {
   }
 }
 
-// Function to create a random graph
+/**
+ * 
+ * @param nodeCount 
+ * @param edgeDensity 
+ * @param minValue 
+ * @param maxValue 
+ * @returns 
+ */
 export function createRandomGraph(nodeCount: number, edgeDensity: number = 0.3, minValue: number = 1, maxValue: number = 20): Graph {
   const graph = new Graph();
   
@@ -301,7 +308,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const bgGradientEnd = isDarkMode ? 'hsl(220, 13%, 15%)' : 'hsl(220, 13%, 90%)';
     const defaultNodeGradientStart = isDarkMode ? 'hsl(210, 100%, 50%)' : 'hsl(210, 100%, 50%)';
     const defaultNodeGradientEnd = isDarkMode ? 'hsl(210, 100%, 40%)' : 'hsl(210, 100%, 40%)';
-    const defaultLinkColor = isDarkMode ? 'hsl(220, 13%, 45%)' : 'hsl(220, 13%, 75%)';
+    const defaultLinkColor = isDarkMode ? 'hsl(0, 0%, 60%)' : 'hsl(0, 0%, 70%)';
     const textColor = 'white';
 
     // Add a subtle gradient background
@@ -484,14 +491,10 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const simulation = d3.forceSimulation<Node>(nodes)
       .force("center", d3.forceCenter(width / 2, height / 2).strength(0.1))
       .force("link", (() => {
-        // Create forceLink and cast it to our extended interface
         const forceLink = d3.forceLink<Node, Edge>(edges)
-          .id(d => d.id) as D3ForceLink<Node, Edge>;
+          .id(d => d.id);
           
-        // Now TypeScript won't complain about these methods
         return forceLink
-          .source(d => d.from_node)
-          .target(d => d.to_node)
           .distance(d => {
             // Heavier edges pull nodes closer together
             const weight = typeof d.data === 'number' ? d.data : 1;
@@ -505,11 +508,8 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .force("charge", d3.forceManyBody().strength(chargeStrength))
       .force("collide", d3.forceCollide<Node>().radius(nodeRadius * 1.8).strength(0.95))
       .force("bounds", () => {
-        // Dynamic padding based on container size
         const padding = Math.max(nodeRadius * 2, Math.min(width, height) * 0.08);
-        
         for (const node of nodes) {
-          // Keep nodes within bounds
           if (node.x! < padding) node.x = padding;
           if (node.x! > width - padding) node.x = width - padding;
           if (node.y! < padding) node.y = padding;

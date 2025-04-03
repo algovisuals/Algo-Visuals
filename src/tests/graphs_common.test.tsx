@@ -190,7 +190,7 @@ describe('createRandomGraph', () => {
   });
 
   test('creates a connected graph', () => {
-    const nodeCount = 10;
+    const nodeCount = 60;
     const graph = createRandomGraph(nodeCount);
     
     // A connected graph with n nodes must have at least n-1 edges

@@ -18,7 +18,6 @@ const DijkstrasPage: FC = () => {
   const [highlightedNodes, setHighlightedNodes] = useState<NodeHighlight[]>([]);
   const [highlightedEdges, setHighlightedEdges] = useState<EdgeHighlight[]>([]);
   const [startNodeId, setStartNodeId] = useState<string | null>(null);
-  const [endNodeId, setEndNodeId] = useState<string | null>(null);
   const [algorithmResult, setAlgorithmResult] = useState<DijkstraResult | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -26,25 +25,25 @@ const DijkstrasPage: FC = () => {
   const autoPlayIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const graphDensity = 0.15; // Adjust this value to control the density of the graph  
+
   // Initialize graph on mount
   useEffect(() => {
-    const newGraph = createRandomGraph(10, 1, 10);
+    const newGraph = createRandomGraph(10, graphDensity, 10);
     setGraph(newGraph);
-    // Set start and end from the available node keys
+    // Set start node from the available node keys
     const nodeIds = Object.keys(newGraph.nodes);
     if (nodeIds.length > 0) {
       setStartNodeId(nodeIds[0]);
-      setEndNodeId(nodeIds[nodeIds.length - 1]);
       setHighlightedNodes([
-        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" }, // Start (green)
-        { nodeId: nodeIds[nodeIds.length - 1], color: "hsl(0,100%,50%)" } // End (red)
+        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" } // Start (green)
       ]);
     }
   }, []);
 
   const handleRunDijkstra = () => {
-    if (!startNodeId || !endNodeId || !graph) {
-      console.error("Missing start or end node, or no graph");
+    if (!startNodeId || !graph) {
+      console.error("Missing start node or no graph");
       return;
     }
 
@@ -70,15 +69,13 @@ const DijkstrasPage: FC = () => {
     setCurrentStepIndex(0);
     setAlgorithmResult(null);
 
-    const newGraph = createRandomGraph(10, 1, 10);
+    const newGraph = createRandomGraph(10, graphDensity, 10);
     setGraph(newGraph);
     const nodeIds = Object.keys(newGraph.nodes);
     if (nodeIds.length > 0) {
       setStartNodeId(nodeIds[0]);
-      setEndNodeId(nodeIds[nodeIds.length - 1]);
       setHighlightedNodes([
-        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" },
-        { nodeId: nodeIds[nodeIds.length - 1], color: "hsl(0,100%,50%)" }
+        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" }
       ]);
       setHighlightedEdges([]);
     }
@@ -137,7 +134,7 @@ const DijkstrasPage: FC = () => {
 
   const updateVisualization = (step: DijkstraStep, resultToUse?: DijkstraResult) => {
     const result = resultToUse || algorithmResult;
-    if (!startNodeId || !endNodeId || !result) {
+    if (!startNodeId || !result) {
       console.error("Cannot update visualization: missing data");
       return;
     }
@@ -152,11 +149,8 @@ const DijkstrasPage: FC = () => {
     const newHighlightedNodes: NodeHighlight[] = [];
     const newHighlightedEdges: EdgeHighlight[] = [];
 
-    // Always highlight start and end nodes.
-    newHighlightedNodes.push(
-      { nodeId: startNodeId, color: "hsl(120,100%,40%)" },
-      { nodeId: endNodeId, color: "hsl(0,100%,50%)" }
-    );
+    // Always highlight the start node.
+    newHighlightedNodes.push({ nodeId: startNodeId, color: "hsl(120,100%,40%)" });
 
     // Highlight current processing node.
     if (step.currentNodeId) {
@@ -168,7 +162,7 @@ const DijkstrasPage: FC = () => {
 
     // Mark visited nodes in blue.
     step.visited.forEach(nodeId => {
-      if (nodeId !== startNodeId && nodeId !== endNodeId && nodeId !== step.currentNodeId) {
+      if (nodeId !== startNodeId && nodeId !== step.currentNodeId) {
         newHighlightedNodes.push({
           nodeId,
           color: "hsl(210,100%,50%)"
@@ -177,7 +171,7 @@ const DijkstrasPage: FC = () => {
     });
 
     // Highlight next shortest (unvisited) node in yellow.
-    if (step.currentShortest && step.currentShortest !== startNodeId && step.currentShortest !== endNodeId) {
+    if (step.currentShortest && step.currentShortest !== startNodeId) {
       newHighlightedNodes.push({
         nodeId: step.currentShortest,
         color: "hsl(45,100%,50%)"
@@ -187,18 +181,10 @@ const DijkstrasPage: FC = () => {
     // If the shortest path has been reconstructed on the final step, highlight that path in gold.
     if (result.shortestPath && currentStepIndex === result.steps.length - 1) {
       const path = result.shortestPath;
-      for (let i = 1; i < path.length - 1; i++) {
-        if (!newHighlightedNodes.some(hl => hl.nodeId === path[i])) {
-          newHighlightedNodes.push({
-            nodeId: path[i],
-            color: "gold"
-          });
-        }
-      }
-      for (let i = 0; i < path.length - 1; i++) {
+      for (let i = 1; i < path.length; i++) {
         newHighlightedEdges.push({
-          sourceId: path[i],
-          targetId: path[i + 1],
+          sourceId: path[i - 1],
+          targetId: path[i],
           color: "gold"
         });
       }
@@ -233,8 +219,9 @@ const DijkstrasPage: FC = () => {
       <Header />
       <main className="flex-grow w-full flex items-center justify-center p-4">
         <div className="w-full max-w-7xl">
-          <h1 className="text-4xl font-bold text-center mb-8">Dijkstra's Algorithm Visualizer</h1>
-          
+          <h1 className="text-4xl font-bold text-center mb-8">
+            Dijkstra's Algorithm Visualizer
+          </h1>
           <div className="rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-md">
             <div className="p-4 border-b border-slate-200 dark:border-slate-800">
               <h2 className="text-xl font-semibold">Graph Visualization</h2>
@@ -242,7 +229,6 @@ const DijkstrasPage: FC = () => {
                 Drag nodes to rearrange the graph. Node values represent edge weights.
               </p>
             </div>
-            
             <div className="p-4">
               <div ref={containerRef} className="w-full h-[600px]">
                 {graph && 
@@ -256,7 +242,6 @@ const DijkstrasPage: FC = () => {
                 }
               </div>
             </div>
-            
             <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
               <div className="flex flex-col gap-4">
                 {algorithmResult && (
@@ -264,14 +249,8 @@ const DijkstrasPage: FC = () => {
                     <p className="text-lg font-medium mb-2">
                       Step {currentStepIndex + 1} of {algorithmResult.steps.length}
                     </p>
-                    {algorithmResult.shortestPath && currentStepIndex === algorithmResult.steps.length - 1 && (
-                      <p className="text-sm text-slate-600 dark:text-slate-300">
-                        Shortest Path Length: {algorithmResult.totalDistance}
-                      </p>
-                    )}
                   </div>
                 )}
-                
                 <div className="flex flex-wrap gap-2 justify-center">
                   {!isRunning ? (
                     <button 
@@ -289,7 +268,6 @@ const DijkstrasPage: FC = () => {
                       >
                         Previous Step
                       </button>
-                      
                       <button 
                         className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
                         onClick={handleStepForward}
@@ -297,7 +275,6 @@ const DijkstrasPage: FC = () => {
                       >
                         Next Step
                       </button>
-                      
                       <button 
                         className={`px-4 py-2 rounded-md font-medium transition-colors ${
                           isAutoPlaying 
@@ -310,7 +287,6 @@ const DijkstrasPage: FC = () => {
                       </button>
                     </>
                   )}
-                  
                   <button 
                     className="px-4 py-2 rounded-md bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                     onClick={handleResetGraph}
@@ -318,30 +294,8 @@ const DijkstrasPage: FC = () => {
                     Reset Graph
                   </button>
                 </div>
-                
-                {algorithmResult && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2 text-sm">
-                    <div className="flex items-center">
-                      <span className="inline-block w-4 h-4 rounded-full bg-[hsl(120,100%,40%)] mr-2"></span>
-                      <span>Start Node</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="inline-block w-4 h-4 rounded-full bg-[hsl(0,100%,50%)] mr-2"></span>
-                      <span>End Node</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="inline-block w-4 h-4 rounded-full bg-[hsl(210,100%,50%)] mr-2"></span>
-                      <span>Visited Nodes</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="inline-block w-4 h-4 rounded-full bg-[hsl(45,100%,50%)] mr-2"></span>
-                      <span>Shortest Path</span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
-
           </div>
         </div>
       </main>
