@@ -10,10 +10,6 @@ type CardProps = {
   card_image?: string;
 };
 
-type loaderDimension ={
-  
-}
-
 const imageLoader = ({ width, height }: { width: number; height: number }): string => {
   return `https://placehold.co/${width}x${height}.png`;
 };
