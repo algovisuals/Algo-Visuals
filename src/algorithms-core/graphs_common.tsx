@@ -1,12 +1,6 @@
 import * as d3 from "d3";
 import { FC, useEffect, useRef, useState } from "react";
 
-// Interface to extend d3.ForceLink to properly type source and target accessors
-interface D3ForceLink<NodeDatum extends d3.SimulationNodeDatum, LinkDatum extends d3.SimulationLinkDatum<NodeDatum>> 
-  extends d3.ForceLink<NodeDatum, LinkDatum> {
-  source(accessor: (d: LinkDatum) => NodeDatum | string | number): this;
-  target(accessor: (d: LinkDatum) => NodeDatum | string | number): this;
-}
 
 // Node interface with outgoing and incoming edge lists
 export interface Node {
@@ -47,11 +41,48 @@ export class Graph {
     }
   }
   
+  // Helper method to generate consistent edge IDs regardless of direction
+  _getEdgeId(nodeId1: string, nodeId2: string): string {
+    return [nodeId1, nodeId2].sort().join('-');
+  }
+  
+  // Check if an edge exists between two nodes (in either direction)
+  hasEdge(nodeId1: string, nodeId2: string): boolean {
+    if (!this.nodes[nodeId1] || !this.nodes[nodeId2]) return false;
+    
+    const node1 = this.nodes[nodeId1];
+    let edge = node1.outgoing_edges;
+    
+    while (edge !== null) {
+      if (edge.to_node.id === nodeId2) return true;
+      edge = edge.next_from;
+    }
+    
+    const node2 = this.nodes[nodeId2];
+    edge = node2.outgoing_edges;
+    
+    while (edge !== null) {
+      if (edge.to_node.id === nodeId1) return true;
+      edge = edge.next_from;
+    }
+    
+    return false;
+  }
+  
   add_edge(from_id: string, to_id: string, weight: number = 1): Edge | null {
     if (this.nodes[from_id] && this.nodes[to_id]) {
+      // Skip if edge already exists in either direction
+      if (this.hasEdge(from_id, to_id)) {
+        return null;
+      }
+      
       const from_node = this.nodes[from_id];
       const to_node = this.nodes[to_id];
       
+      // Create consistent edge ID regardless of direction
+      const edgeId = this._getEdgeId(from_id, to_id);
+      
+      // Create edge
       const edge: Edge = {
         from_node,
         to_node,
@@ -60,7 +91,7 @@ export class Graph {
         prev_from: null,
         next_to: null,
         prev_to: null,
-        id: `${from_id}-${to_id}`,
+        id: edgeId,
         // Add these properties to satisfy SimulationLinkDatum interface
         source: from_node,
         target: to_node
@@ -193,7 +224,10 @@ export function createRandomGraph(nodeCount: number, edgeDensity: number = 0.3, 
   
   // Create random edges
   const nodeIds = Object.keys(graph.nodes);
-  const maxEdges = Math.floor(nodeCount * (nodeCount - 1) * edgeDensity);
+  
+  // Calculate max edges for an undirected graph - each pair can have at most 1 edge
+  const possibleEdgePairs = (nodeCount * (nodeCount - 1)) / 2;
+  const maxEdges = Math.floor(possibleEdgePairs * edgeDensity);
   
   // Ensure the graph is connected (minimum spanning tree)
   const connected = new Set<string>();
@@ -219,33 +253,39 @@ export function createRandomGraph(nodeCount: number, edgeDensity: number = 0.3, 
   // Add additional random edges up to desired density
   let edgeCount = nodeCount - 1; // Already added n-1 edges for connectivity
   
-  while (edgeCount < maxEdges) {
-    const fromId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
-    const toId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
-    
-    // Skip self-loops
-    if (fromId === toId) continue;
-    
-    // Check if edge already exists
-    let existingEdge = false;
-    let curr = graph.nodes[fromId].outgoing_edges;
-    
-    while (curr !== null) {
-      if (curr.to_node.id === toId) {
-        existingEdge = true;
-        break;
-      }
-      curr = curr.next_from;
-    }
-    
-    if (!existingEdge) {
-      const weight = Math.floor(Math.random() * 10) + 1;
-      graph.add_edge(fromId, toId, weight);
-      edgeCount++;
+  // Create a list of all possible node pairs
+  const possiblePairs: [string, string][] = [];
+  for (let i = 0; i < nodeIds.length; i++) {
+    for (let j = i + 1; j < nodeIds.length; j++) {
+      possiblePairs.push([nodeIds[i], nodeIds[j]]);
     }
   }
   
+  // Shuffle the possible pairs to add edges randomly
+  shuffleArray(possiblePairs);
+  
+  // Add edges until we reach the desired density
+  for (const [fromId, toId] of possiblePairs) {
+    // Check if we've reached the maximum
+    if (edgeCount >= maxEdges) break;
+    
+    // Skip if edge already exists
+    if (graph.hasEdge(fromId, toId)) continue;
+    
+    const weight = Math.floor(Math.random() * 10) + 1;
+    graph.add_edge(fromId, toId, weight);
+    edgeCount++;
+  }
+  
   return graph;
+}
+
+// Helper function to shuffle array
+function shuffleArray<T>(array: T[]): void {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
 
 // Highlight interfaces
@@ -267,6 +307,7 @@ export interface GraphVisualizerProps {
   graph: Graph;
   highlightedNodes?: NodeHighlight[];
   highlightedEdges?: EdgeHighlight[];
+  onNodeHover?: (nodeId: string | null) => void; // Add new callback prop
 }
 
 // Main GraphVisualizer component
@@ -275,7 +316,8 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
   height,
   graph,
   highlightedNodes = [],
-  highlightedEdges = []
+  highlightedEdges = [],
+  onNodeHover
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -294,13 +336,15 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const nodes = Object.values(graph.nodes);
     const edges = graph.get_all_edges();
 
-    // Build lookup maps for highlights
+    // Build lookup maps for highlights - need to check both directions for edges
     const highlightedNodesMap = new Map<string, string>();
     highlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
     
     const highlightedEdgesMap = new Map<string, string>();
     highlightedEdges.forEach(hl => {
-      highlightedEdgesMap.set(`${hl.sourceId}-${hl.targetId}`, hl.color);
+      // Generate consistent edge ID for undirected edges
+      const edgeId = [hl.sourceId, hl.targetId].sort().join('-');
+      highlightedEdgesMap.set(edgeId, hl.color);
     });
 
     // Theme-based colors
@@ -385,6 +429,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .data(edges)
       .join("line")
       .attr("stroke", d => {
+        // Use the edge ID which is now consistent regardless of direction
         const highlightColor = highlightedEdgesMap.get(d.id);
         return highlightColor || defaultLinkColor;
       })
@@ -456,6 +501,33 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       )
       .attr("stroke-width", d => highlightedNodesMap.has(d.id) ? 2 : 1.5)
       .attr("stroke-opacity", 0.8)
+      // Add hover event handlers
+      .on("mouseenter", function(event, d) {
+        // Type assertion to fix TypeScript error
+        const node = d as Node;
+        
+        // Call the hover callback if provided
+        if (onNodeHover) onNodeHover(node.id);
+        
+        // Add visual hover effect
+        d3.select(this)
+          .transition().duration(150)
+          .attr("r", nodeRadius * 1.1) // Slightly larger
+          .attr("stroke-width", () => highlightedNodesMap.has(node.id) ? 3 : 2.5);
+      })
+      .on("mouseleave", function(event, d) {
+        // Type assertion to fix TypeScript error
+        const node = d as Node;
+        
+        // Reset the hover state
+        if (onNodeHover) onNodeHover(null);
+        
+        // Restore normal appearance
+        d3.select(this)
+          .transition().duration(150)
+          .attr("r", nodeRadius)
+          .attr("stroke-width", () => highlightedNodesMap.has(node.id) ? 2 : 1.5);
+      })
       .call(d3.drag<SVGCircleElement, Node>()
         .on("start", dragstarted)
         .on("drag", dragged)
@@ -475,6 +547,40 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .attr("fill", textColor)
       .attr("dy", "0.35em");
     
+    // Add edge weight labels - make them smaller and more subtle
+  const edgeLabelFontSize = Math.max(8, Math.min(10, nodeRadius * 0.4));
+
+  // Create background for edge labels - only fully visible when highlighted
+  const edgeLabelBackground = svg.append("g")
+    .selectAll("rect")
+    .data(edges)
+    .join("rect")
+    .attr("fill", isDarkMode ? "rgba(30, 41, 59, 0.6)" : "rgba(255, 255, 255, 0.7)")
+    .attr("rx", 3)
+    .attr("ry", 3)
+    .attr("stroke", d => highlightedEdgesMap.has(d.id) ? 
+      highlightedEdgesMap.get(d.id)! : "transparent")
+    .attr("stroke-width", 1)
+    .attr("width", d => {
+      const weight = typeof d.data === 'number' ? d.data.toString() : "1";
+      return weight.length * edgeLabelFontSize * 0.7 + 8;
+    })
+    .attr("height", edgeLabelFontSize + 4)
+    .attr("opacity", d => highlightedEdgesMap.has(d.id) ? 0.9 : 0.4);
+
+  // Add text elements for edge weights - lower opacity for non-highlighted
+  const edgeLabels = svg.append("g")
+    .selectAll("text")
+    .data(edges)
+    .join("text")
+    .text(d => typeof d.data === 'number' ? d.data.toString() : "1")
+    .attr("font-size", `${edgeLabelFontSize}px`)
+    .attr("font-weight", d => highlightedEdgesMap.has(d.id) ? "600" : "400")
+    .attr("text-anchor", "middle")
+    .attr("dominant-baseline", "central")
+    .attr("fill", isDarkMode ? "hsl(0, 0%, 95%)" : "hsl(0, 0%, 20%)")
+    .attr("opacity", d => highlightedEdgesMap.has(d.id) ? 0.95 : 0.5);
+
     // Calculate appropriate force parameters based on container size
     const optimalLinkDistance = Math.min(width, height) / Math.max(4, Math.sqrt(nodes.length));
     const chargeStrength = -Math.min(
@@ -545,6 +651,45 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
         .attr("x2", d => d.to_node.x || 0)
         .attr("y2", d => d.to_node.y || 0);
         
+      // Position edge labels
+      edges.forEach((edge, i) => {
+        const sourceX = edge.from_node.x || 0;
+        const sourceY = edge.from_node.y || 0;
+        const targetX = edge.to_node.x || 0;
+        const targetY = edge.to_node.y || 0;
+        
+        // Position in the middle of the edge
+        const midX = (sourceX + targetX) / 2;
+        const midY = (sourceY + targetY) / 2;
+        
+        // Calculate a slight offset perpendicular to the edge
+        // This moves the label slightly to the side of the edge for better visibility
+        const dx = targetX - sourceX;
+        const dy = targetY - sourceY;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        // Only create offset if edge is long enough
+        if (length > nodeRadius * 3) {
+          // Increase offset to move labels further from edges
+          const offsetScale = 0.25;
+          const offsetX = (dy / length) * nodeRadius * offsetScale;
+          const offsetY = (-dx / length) * nodeRadius * offsetScale;
+          
+          // Apply the position to the rectangle and text
+          d3.select(edgeLabelBackground.nodes()[i])
+            .attr("x", midX + offsetX - parseInt(d3.select(edgeLabelBackground.nodes()[i]).attr("width")) / 2)
+            .attr("y", midY + offsetY - parseInt(d3.select(edgeLabelBackground.nodes()[i]).attr("height")) / 2);
+            
+          d3.select(edgeLabels.nodes()[i])
+            .attr("x", midX + offsetX)
+            .attr("y", midY + offsetY);
+        } else {
+          // For short edges, just hide the labels completely
+          d3.select(edgeLabelBackground.nodes()[i]).attr("opacity", 0);
+          d3.select(edgeLabels.nodes()[i]).attr("opacity", 0);
+        }
+      });
+        
       node
         .attr("cx", d => d.x || 0)
         .attr("cy", d => d.y || 0);
@@ -558,7 +703,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     return () => {
       simulation.stop();
     };
-  }, [graph, dimensions, isDarkMode, highlightedNodes, highlightedEdges]);
+  }, [graph, dimensions, isDarkMode, onNodeHover]); // Add onNodeHover to dependency array
   
   // Separate effect: update highlights only
   useEffect(() => {
@@ -568,9 +713,12 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     // Recreate lookup maps for highlights
     const highlightedNodesMap = new Map<string, string>();
     highlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
+    
     const highlightedEdgesMap = new Map<string, string>();
     highlightedEdges.forEach(hl => {
-      highlightedEdgesMap.set(`${hl.sourceId}-${hl.targetId}`, hl.color);
+      // Generate consistent edge ID for undirected edges - FIXED
+      const edgeId = [hl.sourceId, hl.targetId].sort().join('-');
+      highlightedEdgesMap.set(edgeId, hl.color);
     });
 
     // Update node selection individually without removing them
@@ -579,22 +727,49 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .attr("fill", (d: Node) => 
         highlightedNodesMap.has(d.id) ? `url(#gradient-node-${d.id})` : "url(#gradient-node)"
       )
-      .attr("filter", d => highlightedNodesMap.has(d.id) ? "url(#glow)" : "url(#shadow)")
+      .attr("filter", (d: Node) => highlightedNodesMap.has(d.id) ? "url(#glow)" : "url(#shadow)")
       .attr("stroke", (d: Node) => 
         highlightedNodesMap.has(d.id) ? highlightedNodesMap.get(d.id)! : "white"
-      );
+      )
+      .attr("stroke-width", (d: Node) => highlightedNodesMap.has(d.id) ? 2 : 1.5)
+      // Fix: Explicitly set opacity to ensure nodes don't become transparent
+      .attr("opacity", 1)
+      // Fix: Add pointer-events to ensure nodes remain interactive
+      .attr("pointer-events", "all");
 
     // Update links similarly with proper type cast
     svg.selectAll<SVGLineElement, Edge>("line")
       .transition().duration(300)
       .attr("stroke", (d: Edge) => {
-        const highlightColor = highlightedEdgesMap.get(d.id);
+        const highlightColor = d.id ? highlightedEdgesMap.get(d.id) : undefined;
         return highlightColor ? highlightColor : (isDarkMode ? 'hsl(220, 13%, 45%)' : 'hsl(220, 13%, 75%)');
       })
       .attr("stroke-width", (d: Edge) => {
         const weight = typeof d.data === 'number' ? d.data : 1;
-        const baseWidth = highlightedEdgesMap.has(d.id) ? 2.5 : 1.5;
+        const baseWidth = d.id && highlightedEdgesMap.has(d.id) ? 2.5 : 1.5;
         return baseWidth * Math.sqrt(weight) / 2;
+      })
+      .attr("stroke-opacity", (d: Edge) => d.id && highlightedEdgesMap.has(d.id) ? 0.8 : 0.5);
+
+    // Update the edge labels to show more clearly when highlighted
+    svg.selectAll<SVGRectElement, Edge>("rect").transition().duration(300)
+      .attr("opacity", (d: Edge) => {
+        if (d && d.id && highlightedEdgesMap.has(d.id)) return 0.9;
+        return 0.6;
+      })
+      .attr("stroke", (d: Edge) => {
+        if (d && d.id && highlightedEdgesMap.has(d.id)) 
+          return highlightedEdgesMap.get(d.id)!;
+        return "transparent";
+      });
+
+    // Filter for valid elements before applying the transition
+    svg.selectAll<SVGTextElement, Edge>("text")
+      .filter((d: any) => d && d.id !== undefined)
+      .transition().duration(300)
+      .attr("opacity", (d: Edge) => {
+        if (d.id && highlightedEdgesMap.has(d.id)) return 0.95;
+        return 0.7;
       });
   }, [highlightedNodes, highlightedEdges, isDarkMode]);
 

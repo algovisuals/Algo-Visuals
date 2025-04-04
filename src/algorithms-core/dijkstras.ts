@@ -100,6 +100,7 @@ export function reconstructPath(
   return { path: null, distance: null };
 }
 
+
 /**
  * Implementation of Dijkstra's algorithm to find the shortest paths from a source node to all other nodes.
  * The weight of an edge is determined by the 'data' property of the edge.
@@ -173,12 +174,22 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     // Get the current node from the graph
     const currentNode = graph.nodes[currentNodeId];
     
-    // Process all outgoing edges from the current node to update distances
+    // Process all edges from the current node
+    // For undirected graphs, we need to check both outgoing and incoming edges
+    // since each can be traversed in either direction
+    
+    // Process outgoing edges
     let edge = currentNode.outgoing_edges;
     console.log(`Checking outgoing edges from ${currentNodeId}:`);
     
     while (edge !== null) {
       const neighborId = edge.to_node.id;
+      
+      // Only process unvisited nodes or nodes we might improve
+      if (visited.has(neighborId) && distances.get(neighborId)! <= currentDistance) {
+        edge = edge.next_from;
+        continue;
+      }
       
       // Get the weight of the edge (use 1 as default if not a number)
       const weight = typeof edge.data === 'number' ? edge.data : 1;
@@ -197,8 +208,40 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
         console.log(`  No update needed for ${neighborId}`);
       }
       
-      // Move to the next outgoing edge
       edge = edge.next_from;
+    }
+    
+    // Process incoming edges (because graph is now undirected)
+    edge = currentNode.incoming_edges;
+    console.log(`Checking incoming edges to ${currentNodeId}:`);
+    
+    while (edge !== null) {
+      const neighborId = edge.from_node.id;
+      
+      // Only process unvisited nodes or nodes we might improve
+      if (visited.has(neighborId) && distances.get(neighborId)! <= currentDistance) {
+        edge = edge.next_to;
+        continue;
+      }
+      
+      // Get the weight of the edge (use 1 as default if not a number)
+      const weight = typeof edge.data === 'number' ? edge.data : 1;
+      const newDistance = currentDistance + weight;
+      
+      console.log(`  Edge from ${neighborId} with weight ${weight} gives new distance ${newDistance}`);
+      console.log(`  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
+      
+      // If we found a shorter path, update the distance and previous node
+      const currentNeighborDistance = distances.has(neighborId) ? distances.get(neighborId)! : Infinity;
+      if (newDistance < currentNeighborDistance) {
+        console.log(`  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
+        distances.set(neighborId, newDistance);
+        previous.set(neighborId, currentNodeId);
+      } else {
+        console.log(`  No update needed for ${neighborId}`);
+      }
+      
+      edge = edge.next_to;
     }
     
     // Find the next node for visualization

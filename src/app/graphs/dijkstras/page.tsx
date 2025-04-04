@@ -4,7 +4,7 @@ import React, { useState, FC, useRef, useEffect } from "react";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { dijkstra, DijkstraStep, DijkstraResult } from "@/algorithms-core/dijkstras";
+import { dijkstra, DijkstraStep, DijkstraResult, reconstructPath } from "@/algorithms-core/dijkstras";
 import { 
   GraphVisualizer, 
   NodeHighlight,
@@ -23,13 +23,14 @@ const DijkstrasPage: FC = () => {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(false);
   const autoPlayIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [graphDensity, setGraphDensity] = useState<number>(0.1);
+  const [graphSize, setGraphSize] = useState<number>(20);
+
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const graphDensity = 0.15; // Adjust this value to control the density of the graph  
-
   // Initialize graph on mount
   useEffect(() => {
-    const newGraph = createRandomGraph(10, graphDensity, 10);
+    const newGraph = createRandomGraph(graphSize, graphDensity);
     setGraph(newGraph);
     // Set start node from the available node keys
     const nodeIds = Object.keys(newGraph.nodes);
@@ -69,7 +70,7 @@ const DijkstrasPage: FC = () => {
     setCurrentStepIndex(0);
     setAlgorithmResult(null);
 
-    const newGraph = createRandomGraph(10, graphDensity, 10);
+    const newGraph = createRandomGraph(graphSize, graphDensity);
     setGraph(newGraph);
     const nodeIds = Object.keys(newGraph.nodes);
     if (nodeIds.length > 0) {
@@ -214,6 +215,22 @@ const DijkstrasPage: FC = () => {
     };
   }, []);
 
+  const showOptimalPath = (nodeId: string | null) => {
+    const edgesTraversed = new Set<string>();
+    if (nodeId) {
+      console.log("Optimal path for node:", nodeId);
+      const optimalPath = algorithmResult?.shortestPath;
+      if (optimalPath) {
+        optimalPath.forEach((node, index) => {
+          if (index < optimalPath.length - 1) {
+            edgesTraversed.add(`${node}-${optimalPath[index + 1]}`);
+          }
+        });
+      }
+      console.log("Edges traversed:", Array.from(edgesTraversed));
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen transition-colors">
       <Header />
@@ -226,7 +243,7 @@ const DijkstrasPage: FC = () => {
             <div className="p-4 border-b border-slate-200 dark:border-slate-800">
               <h2 className="text-xl font-semibold">Graph Visualization</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Drag nodes to rearrange the graph. Node values represent edge weights.
+                Drag nodes to rearrange the graph.
               </p>
             </div>
             <div className="p-4">
@@ -293,6 +310,26 @@ const DijkstrasPage: FC = () => {
                   >
                     Reset Graph
                   </button>
+                  {/* input value  */}
+                  <input 
+                    type="number" 
+                    value={graphDensity || ""} 
+                    onChange={(e) => setGraphDensity(Number(e.target.value))} 
+                    placeholder="Enter Graph Density" 
+                    className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    step="0.1"
+                    max={1}
+                  />
+
+                  <input 
+                    type ="number"
+                    value= {graphSize || ""}
+                    onChange={(e) => setGraphSize(Number(e.target.value))}
+                    placeholder="Enter Graph Size"
+                    className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    min={2}
+                    max={100}
+                  />
                 </div>
               </div>
             </div>

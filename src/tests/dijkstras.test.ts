@@ -313,6 +313,19 @@ describe('Dijkstra Algorithm', () => {
     expect(pathResult.path).toEqual(["A", "B", "C", "D"]);
     expect(pathResult.distance).toBe(4);
   });
+
+  test('should be able to find shortest path in a complex graph', () => {
+    const graph = createComplexGraph();
+    const startNodeId = "A";
+    const endNodeId = "F";
+    
+    const result = dijkstra(graph, startNodeId);
+    const pathResult = reconstructPath(endNodeId, startNodeId, result.previous, result.distances);
+
+    // Correct shortest path is A -> B -> C -> E -> D -> F with total cost 9
+    expect(pathResult.path).toEqual(["A", "B", "C", "E", "D", "F"]);
+    expect(pathResult.distance).toBe(9);
+  })
   
   test('debug graph structure', () => {
     const graph = createTestGraph();
