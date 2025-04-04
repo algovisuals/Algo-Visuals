@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import  { faCode, faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 
-const header = () => {
+const Header = () => {
     const [menuOpen, setMenuOpen] = useState(false);
 
     return (
@@ -70,4 +70,4 @@ const header = () => {
     )
 }
 
-export default header
+export default Header
