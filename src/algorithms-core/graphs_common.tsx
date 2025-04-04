@@ -815,7 +815,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
   return (
     <div 
       ref={containerRef} 
-      className="w-full h-full min-h-[400px] rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800"
+      className="w-full h-full min-h-[400px] rounded-xl overflow-hidden shadow-sm border border-gray-200 dark:border-gray-800"
       style={{ width: '100%', height: '100%' }}
     >
       <svg 

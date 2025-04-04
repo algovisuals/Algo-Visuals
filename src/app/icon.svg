@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Dark background (tailwind gray-800)--> 
+  <rect width="100" height="100" rx="20" ry="20" fill="#1d293d" />
+  
+  <!-- Code brackets </> -->
+  <path d="M30 40 L20 50 L30 60" stroke="white" stroke-width="6" fill="none" />
+  <path d="M70 40 L80 50 L70 60" stroke="white" stroke-width="6" fill="none" />
+  <path d="M45 30 L55 70" stroke="white" stroke-width="6" fill="none" />
+</svg>
