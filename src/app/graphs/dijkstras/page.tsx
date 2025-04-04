@@ -232,10 +232,10 @@ const DijkstrasPage: FC = () => {
           <h1 className="text-4xl font-bold text-center mb-8">
             Dijkstra&apos;s Algorithm Visualizer
           </h1>
-          <div className="rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-md">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+          <div className="rounded-xl overflow-hidden bg-white dark:bg-gray-900 shadow-md">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800">
               <h2 className="text-xl font-semibold">Graph Visualization</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Drag nodes to rearrange the graph.
               </p>
             </div>
@@ -252,7 +252,7 @@ const DijkstrasPage: FC = () => {
                 }
               </div>
             </div>
-            <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
               <div className="flex flex-col gap-4">
                 {algorithmResult && (
                   <div className="text-center">
@@ -272,7 +272,7 @@ const DijkstrasPage: FC = () => {
                   ) : (
                     <>
                       <button 
-                        className="px-4 py-2 rounded-md bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                        className="px-4 py-2 rounded-md bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                         onClick={handleStepBackward}
                         disabled={currentStepIndex <= 0}
                       >
@@ -298,7 +298,7 @@ const DijkstrasPage: FC = () => {
                     </>
                   )}
                   <button 
-                    className="px-4 py-2 rounded-md bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200 font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                    className="px-4 py-2 rounded-md bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     onClick={handleResetGraph}
                   >
                     Reset Graph
@@ -309,7 +309,7 @@ const DijkstrasPage: FC = () => {
                     value={graphDensity || ""} 
                     onChange={(e) => setGraphDensity(Number(e.target.value))} 
                     placeholder="Enter Graph Density" 
-                    className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     step="0.1"
                     max={1}
                   />
@@ -318,12 +318,12 @@ const DijkstrasPage: FC = () => {
                     value={graphSize || ""}
                     onChange={(e) => setGraphSize(Number(e.target.value))}
                     placeholder="Enter Graph Size"
-                    className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     min={2}
                     max={100}
                   />
                   {/* Debug mode toggle */}
-                  <label className="flex items-center px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                  <label className="flex items-center px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                     <input
                       type="checkbox"
                       checked={debug}

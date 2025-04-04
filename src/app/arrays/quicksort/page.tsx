@@ -116,7 +116,7 @@ const QuickSortPage: FC = () => {
       <main className="flex-grow w-full flex items-center justify-center px-4">
         <div className="w-full max-w-screen-2xl">
           <h1 className="text-4xl font-bold text-center mb-8">Quicksort Visualizer</h1>
-          <div className="flex flex-col md:flex-row gap-8 bg-slate-100 dark:bg-slate-800 p-4 rounded-lg">
+          <div className="flex flex-col md:flex-row gap-8 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
             <Sidebar 
               opt1Action={handleToggleAutoStep} 
               opt2Action={handleStep} 
