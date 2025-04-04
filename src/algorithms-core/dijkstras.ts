@@ -20,7 +20,7 @@ export interface DijkstraResult {
 /**
  * Helper function for conditional debug logging
  */
-function debugLog(debug: boolean, ...args: any[]): void {
+function debugLog(debug: boolean, ...args: unknown[]): void {
   if (debug) {
     console.log(...args);
   }

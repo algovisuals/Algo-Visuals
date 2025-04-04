@@ -8,7 +8,7 @@ import {
 } from "@/algorithms-core/dijkstras";
 
 // Helper function for conditional debug logging in tests
-function debugLog(debug: boolean, ...args: any[]): void {
+function debugLog(debug: boolean, ...args: unknown[]): void {
   if (debug) {
     console.log(...args);
   }
