@@ -151,7 +151,6 @@ export default function Home() {
 const CardWrapper = ({ 
   children, 
   delay, 
-  href 
 }: { 
   children: React.ReactNode; 
   delay: number; 
@@ -163,6 +162,7 @@ const CardWrapper = ({
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
+      transition={{ delay }}
       className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg shadow-lg overflow-hidden"
     >
       {children}
