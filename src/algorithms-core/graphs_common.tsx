@@ -18,7 +18,7 @@ export interface Node {
 export interface Edge extends d3.SimulationLinkDatum<Node> {
   from_node: Node;
   to_node: Node;
-  data: any; // Edge data/weight
+  data: number | string | object; // Edge data/weight with specific types
   next_from: Edge | null; // Next edge in outgoing list
   prev_from: Edge | null; // Previous edge in outgoing list
   next_to: Edge | null;   // Next edge in incoming list
@@ -327,6 +327,16 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     window.matchMedia('(prefers-color-scheme: dark)').matches
   );
 
+  const highlightedNodesRef = useRef(highlightedNodes);
+  const highlightedEdgesRef = useRef(highlightedEdges);
+
+  // At the start of your component or effect
+  useEffect(() => {
+    highlightedNodesRef.current = highlightedNodes;
+    highlightedEdgesRef.current = highlightedEdges;
+  }, [highlightedNodes, highlightedEdges]);
+
+  // Main effect for graph rendering and visualization
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -336,12 +346,16 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const nodes = Object.values(graph.nodes);
     const edges = graph.get_all_edges();
 
+    // Store local references to props to include in the dependency array
+    const currentHighlightedNodes = highlightedNodesRef.current;
+    const currentHighlightedEdges = highlightedEdgesRef.current;
+
     // Build lookup maps for highlights - need to check both directions for edges
     const highlightedNodesMap = new Map<string, string>();
-    highlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
+    currentHighlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
     
     const highlightedEdgesMap = new Map<string, string>();
-    highlightedEdges.forEach(hl => {
+    currentHighlightedEdges.forEach(hl => {
       // Generate consistent edge ID for undirected edges
       const edgeId = [hl.sourceId, hl.targetId].sort().join('-');
       highlightedEdgesMap.set(edgeId, hl.color);
@@ -486,9 +500,9 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const nodeGroup = svg.append("g");
 
     const node = nodeGroup
-      .selectAll("circle")
+      .selectAll<SVGCircleElement, Node>("circle")
       .data(nodes)
-      .join("circle")
+      .join<SVGCircleElement>("circle")
       .attr("r", nodeRadius)
       .attr("fill", d => 
         highlightedNodesMap.has(d.id)
@@ -531,7 +545,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .call(d3.drag<SVGCircleElement, Node>()
         .on("start", dragstarted)
         .on("drag", dragged)
-        .on("end", dragended) as any);
+        .on("end", dragended));
     
     // Calculate appropriate font size based on node radius
     const fontSize = Math.max(10, Math.min(14, nodeRadius * 0.6));
@@ -591,8 +605,6 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       )
     );
 
-    
-    
     // Set up force simulation with our edge structure
     const simulation = d3.forceSimulation<Node>(nodes)
       .force("center", d3.forceCenter(width / 2, height / 2).strength(0.1))
@@ -624,20 +636,20 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       });
     
     // Add interactivity with drag functions
-    function dragstarted(event: any, d: Node) {
+    function dragstarted(event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
     
-    function dragged(event: any, d: Node) {
+    function dragged(event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) {
       // Constrain dragging within bounds
       const padding = nodeRadius;
       d.fx = Math.max(padding, Math.min(width - padding, event.x));
       d.fy = Math.max(padding, Math.min(height - padding, event.y));
     }
     
-    function dragended(event: any, d: Node) {
+    function dragended(event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) {
       if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
@@ -703,6 +715,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     return () => {
       simulation.stop();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, dimensions, isDarkMode, onNodeHover]); // Add onNodeHover to dependency array
   
   // Separate effect: update highlights only
@@ -710,13 +723,17 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
 
+    // Local copies of the component props to use in the effect
+    const localHighlightedNodes = highlightedNodesRef.current;
+    const localHighlightedEdges = highlightedEdgesRef.current;
+
     // Recreate lookup maps for highlights
     const highlightedNodesMap = new Map<string, string>();
-    highlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
+    localHighlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
     
     const highlightedEdgesMap = new Map<string, string>();
-    highlightedEdges.forEach(hl => {
-      // Generate consistent edge ID for undirected edges - FIXED
+    localHighlightedEdges.forEach(hl => {
+      // Generate consistent edge ID for undirected edges
       const edgeId = [hl.sourceId, hl.targetId].sort().join('-');
       highlightedEdgesMap.set(edgeId, hl.color);
     });
@@ -765,7 +782,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
 
     // Filter for valid elements before applying the transition
     svg.selectAll<SVGTextElement, Edge>("text")
-      .filter((d: any) => d && d.id !== undefined)
+      .filter((d: Edge) => d && d.id !== undefined)
       .transition().duration(300)
       .attr("opacity", (d: Edge) => {
         if (d.id && highlightedEdgesMap.has(d.id)) return 0.95;

@@ -1,11 +1,10 @@
-import { Graph, Node, Edge } from "@/algorithms-core/graphs_common";
+import { Graph } from "@/algorithms-core/graphs_common";
+import type { Node } from "@/algorithms-core/graphs_common";
 import {
   dijkstra,
   findNodeWithSmallestDistance,
   createDijkstraStep,
   reconstructPath,
-  DijkstraStep,
-  DijkstraResult
 } from "@/algorithms-core/dijkstras";
 
 describe('Dijkstra Algorithm Utilities', () => {

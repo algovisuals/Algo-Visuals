@@ -1,4 +1,4 @@
-import { Graph, createRandomGraph, Edge, Node } from '@/algorithms-core/graphs_common';
+import { Graph, createRandomGraph, Node } from '@/algorithms-core/graphs_common';
 
 describe('Graph class', () => {
   test('creates a new graph with no nodes', () => {
@@ -54,10 +54,10 @@ describe('Graph class', () => {
     graph.add_node('node-1', 10);
     
     const edge1 = graph.add_edge('node-1', 'node-2', 5); // node-2 doesn't exist
-    const edge2 = graph.add_edge('node-3', 'node-1', 5); // node-3 doesn't exist
+    const nonExistentEdge = graph.add_edge('node-3', 'node-1', 5); // node-3 doesn't exist
     
     expect(edge1).toBeNull();
-    expect(edge2).toBeNull();
+    expect(nonExistentEdge).toBeNull();
   });
 
   test('add_edge handles multiple edges from same source', () => {
@@ -135,7 +135,6 @@ describe('Graph class', () => {
     graph.add_node('node-4', 40);
     
     const edge1 = graph.add_edge('node-1', 'node-2', 5);
-    const edge2 = graph.add_edge('node-1', 'node-3', 10);
     const edge3 = graph.add_edge('node-1', 'node-4', 15);
     
     graph.remove_edge('node-1', 'node-3'); // Remove middle edge

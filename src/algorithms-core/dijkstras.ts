@@ -1,4 +1,4 @@
-import { Graph, Node, Edge } from "./graphs_common";
+import { Graph } from "./graphs_common";
 
 export interface DijkstraStep {
   currentNodeId: string | null; // The node currently being processed (null for initial step)

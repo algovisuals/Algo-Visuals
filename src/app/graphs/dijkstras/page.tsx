@@ -4,7 +4,8 @@ import React, { useState, FC, useRef, useEffect } from "react";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { dijkstra, DijkstraStep, DijkstraResult, reconstructPath } from "@/algorithms-core/dijkstras";
+import { dijkstra, DijkstraStep, DijkstraResult } from "@/algorithms-core/dijkstras";
+
 import { 
   GraphVisualizer, 
   NodeHighlight,
@@ -28,7 +29,7 @@ const DijkstrasPage: FC = () => {
   const [graphSize, setGraphSize] = useState<number>(20);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  // Initialize graph on mount
+  // Initialize graph on mount with the correct dependencies
   useEffect(() => {
     const newGraph = createRandomGraph(graphSize, graphDensity);
     setGraph(newGraph);
@@ -40,7 +41,7 @@ const DijkstrasPage: FC = () => {
         { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" } // Start (green)
       ]);
     }
-  }, []);
+  }, [graphSize, graphDensity]);
 
   const handleRunDijkstra = () => {
     if (!startNodeId || !graph) {
@@ -215,29 +216,13 @@ const DijkstrasPage: FC = () => {
     };
   }, []);
 
-  const showOptimalPath = (nodeId: string | null) => {
-    const edgesTraversed = new Set<string>();
-    if (nodeId) {
-      console.log("Optimal path for node:", nodeId);
-      const optimalPath = algorithmResult?.shortestPath;
-      if (optimalPath) {
-        optimalPath.forEach((node, index) => {
-          if (index < optimalPath.length - 1) {
-            edgesTraversed.add(`${node}-${optimalPath[index + 1]}`);
-          }
-        });
-      }
-      console.log("Edges traversed:", Array.from(edgesTraversed));
-    }
-  }
-
   return (
     <div className="flex flex-col min-h-screen transition-colors">
       <Header />
       <main className="flex-grow w-full flex items-center justify-center p-4">
         <div className="w-full max-w-7xl">
           <h1 className="text-4xl font-bold text-center mb-8">
-            Dijkstra's Algorithm Visualizer
+            Dijkstra&apos;s Algorithm Visualizer
           </h1>
           <div className="rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-md">
             <div className="p-4 border-b border-slate-200 dark:border-slate-800">
@@ -274,7 +259,7 @@ const DijkstrasPage: FC = () => {
                       className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
                       onClick={handleRunDijkstra}
                     >
-                      Run Dijkstra's Algorithm
+                      Run Dijkstra&apos;s Algorithm
                     </button>
                   ) : (
                     <>
@@ -286,22 +271,22 @@ const DijkstrasPage: FC = () => {
                         Previous Step
                       </button>
                       <button 
-                        className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-                        onClick={handleStepForward}
-                        disabled={!!algorithmResult && currentStepIndex >= (algorithmResult.steps.length - 1)}
-                      >
-                        Next Step
-                      </button>
-                      <button 
-                        className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                    className="px-4 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                    onClick={handleStepForward}
+                    disabled={!!algorithmResult && currentStepIndex >= (algorithmResult.steps.length - 1)}
+                  >
+                    Next Step
+                  </button>
+                  <button 
+                    className={`px-4 py-2 rounded-md font-medium transition-colors ${
                           isAutoPlaying 
                             ? "bg-yellow-500 text-white hover:bg-yellow-600" 
                             : "bg-green-600 text-white hover:bg-green-700"
                         }`}
-                        onClick={handleToggleAutoPlay}
-                      >
-                        {isAutoPlaying ? "Pause" : "Auto Play"}
-                      </button>
+                    onClick={handleToggleAutoPlay}
+                  >
+                    {isAutoPlaying ? "Pause" : "Auto Play"}
+                  </button>
                     </>
                   )}
                   <button 
