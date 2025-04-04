@@ -5,6 +5,7 @@ import React, { useState, FC, useRef } from "react";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/code-side-bar";
+import ArrayBase from "@/components/array-base";
 
 const intervalMilliseconds = 500; // interval for auto-stepping
 
