@@ -18,12 +18,9 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
 
         const boxSize = 50;
         const spacing = 10;
-        const padding = 50;
 
         const width = array.length * (boxSize + spacing) - spacing;
         const height = 200;
-
-        const startX = 0;
 
         // Set SVG dimensions
         svg.attr("width", width).attr("height", height);
@@ -60,7 +57,7 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         .attr("font-size", "18px")
         .attr("font-weight", "bold")
         .text(d => d);
-    }, [array]); // Re-run if the array changes
+    }, [array, comparing, pivotIndex]); // Re-run if the array changes
 
     return (
         <div className="flex justify-center items-center">
