@@ -7,6 +7,16 @@ import {
   reconstructPath,
 } from "@/algorithms-core/dijkstras";
 
+// Helper function for conditional debug logging in tests
+function debugLog(debug: boolean, ...args: any[]): void {
+  if (debug) {
+    console.log(...args);
+  }
+}
+
+// Set to true to enable debug logs in tests
+const DEBUG = false;
+
 describe('Dijkstra Algorithm Utilities', () => {
   describe('findNodeWithSmallestDistance', () => {
     test('should find the node with smallest distance in a set', () => {
@@ -48,7 +58,7 @@ describe('Dijkstra Algorithm Utilities', () => {
       ]);
       
       const result = findNodeWithSmallestDistance(unvisited, distances);
-      console.log(`Result of findNodeWithSmallestDistance: ${result}`);
+      debugLog(DEBUG, `Result of findNodeWithSmallestDistance: ${result}`);
       
       // This should be 'A' since it has the smallest distance (0)
       expect(result).toBe('A');
@@ -324,7 +334,7 @@ describe('Dijkstra Algorithm', () => {
     // Correct shortest path is A -> B -> C -> E -> D -> F with total cost 9
     expect(pathResult.path).toEqual(["A", "B", "C", "E", "D", "F"]);
     expect(pathResult.distance).toBe(9);
-  })
+  });
   
   test('debug graph structure', () => {
     const graph = createTestGraph();
@@ -332,28 +342,28 @@ describe('Dijkstra Algorithm', () => {
     // Print out the outgoing edges structure for each node
     for (const nodeId in graph.nodes) {
       const node = graph.nodes[nodeId];
-      console.log(`Node ${nodeId} outgoing edges:`);
+      debugLog(DEBUG, `Node ${nodeId} outgoing edges:`);
       
       let edge = node.outgoing_edges;
       let count = 0;
       while (edge !== null) {
-        console.log(`  Edge to ${edge.to_node.id} with weight ${edge.data}`);
+        debugLog(DEBUG, `  Edge to ${edge.to_node.id} with weight ${edge.data}`);
         edge = edge.next_from;
         count++;
       }
-      console.log(`  Total outgoing edges: ${count}`);
+      debugLog(DEBUG, `  Total outgoing edges: ${count}`);
     }
     
-    // Run dijkstra and print detailed steps
-    const result = dijkstra(graph, "A");
-    console.log("\nDijkstra steps:");
+    // Run dijkstra with debug enabled when DEBUG is true
+    const result = dijkstra(graph, "A", DEBUG);
+    debugLog(DEBUG, "\nDijkstra steps:");
     result.steps.forEach((step, index) => {
-      console.log(`Step ${index}:`);
-      console.log(`  Current node: ${step.currentNodeId}`);
-      console.log(`  Next shortest: ${step.currentShortest}`);
-      console.log(`  Distances: ${[...step.distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
-      console.log(`  Visited: ${Array.from(step.visited).join(', ')}`);
-      console.log(`  Unvisited: ${Array.from(step.unvisited).join(', ')}`);
+      debugLog(DEBUG, `Step ${index}:`);
+      debugLog(DEBUG, `  Current node: ${step.currentNodeId}`);
+      debugLog(DEBUG, `  Next shortest: ${step.currentShortest}`);
+      debugLog(DEBUG, `  Distances: ${[...step.distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
+      debugLog(DEBUG, `  Visited: ${Array.from(step.visited).join(', ')}`);
+      debugLog(DEBUG, `  Unvisited: ${Array.from(step.unvisited).join(', ')}`);
     });
   });
   

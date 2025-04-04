@@ -18,6 +18,15 @@ export interface DijkstraResult {
 }
 
 /**
+ * Helper function for conditional debug logging
+ */
+function debugLog(debug: boolean, ...args: any[]): void {
+  if (debug) {
+    console.log(...args);
+  }
+}
+
+/**
  * Finds the node with the smallest distance in the unvisited set
  * 
  * @param nodeSet - Set of unvisited node IDs
@@ -107,9 +116,10 @@ export function reconstructPath(
  * 
  * @param graph - The graph object containing nodes and edges
  * @param startNodeId - The ID of the starting node
+ * @param debug - Whether to enable debug logging (default: false)
  * @returns The algorithm steps and result
  */
-export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
+export function dijkstra(graph: Graph, startNodeId: string, debug: boolean = false): DijkstraResult {
   // Validate input
   if (!graph.nodes[startNodeId]) {
     throw new Error(`Start node ${startNodeId} not found in the graph`);
@@ -142,7 +152,7 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
   ));
   
   // For debugging: log the starting distance map
-  console.log("Initial distances:", [...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', '));
+  debugLog(debug, "Initial distances:", [...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', '));
   
   // Main algorithm loop - continue until all nodes are visited or no more nodes are reachable
   while (unvisited.size > 0) {
@@ -151,7 +161,7 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     
     // If no reachable node, we're done
     if (currentNodeId === null) {
-      console.log("No reachable node found, breaking the loop");
+      debugLog(debug, "No reachable node found, breaking the loop");
       break;
     }
     
@@ -159,11 +169,11 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     const currentDistance = distances.get(currentNodeId)!;
     
     // For debugging: log the current node and its distance
-    console.log(`Processing node ${currentNodeId} with distance ${currentDistance}`);
+    debugLog(debug, `Processing node ${currentNodeId} with distance ${currentDistance}`);
     
     // If the closest node has infinite distance, no more nodes are reachable
     if (currentDistance === Infinity) {
-      console.log("Closest node has infinite distance, breaking the loop");
+      debugLog(debug, "Closest node has infinite distance, breaking the loop");
       break;
     }
     
@@ -180,7 +190,7 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     
     // Process outgoing edges
     let edge = currentNode.outgoing_edges;
-    console.log(`Checking outgoing edges from ${currentNodeId}:`);
+    debugLog(debug, `Checking outgoing edges from ${currentNodeId}:`);
     
     while (edge !== null) {
       const neighborId = edge.to_node.id;
@@ -195,17 +205,17 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
       const weight = typeof edge.data === 'number' ? edge.data : 1;
       const newDistance = currentDistance + weight;
       
-      console.log(`  Edge to ${neighborId} with weight ${weight} gives new distance ${newDistance}`);
-      console.log(`  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
+      debugLog(debug, `  Edge to ${neighborId} with weight ${weight} gives new distance ${newDistance}`);
+      debugLog(debug, `  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
       
       // If we found a shorter path, update the distance and previous node
       const currentNeighborDistance = distances.has(neighborId) ? distances.get(neighborId)! : Infinity;
       if (newDistance < currentNeighborDistance) {
-        console.log(`  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
+        debugLog(debug, `  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
         distances.set(neighborId, newDistance);
         previous.set(neighborId, currentNodeId);
       } else {
-        console.log(`  No update needed for ${neighborId}`);
+        debugLog(debug, `  No update needed for ${neighborId}`);
       }
       
       edge = edge.next_from;
@@ -213,7 +223,7 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     
     // Process incoming edges (because graph is now undirected)
     edge = currentNode.incoming_edges;
-    console.log(`Checking incoming edges to ${currentNodeId}:`);
+    debugLog(debug, `Checking incoming edges to ${currentNodeId}:`);
     
     while (edge !== null) {
       const neighborId = edge.from_node.id;
@@ -228,17 +238,17 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
       const weight = typeof edge.data === 'number' ? edge.data : 1;
       const newDistance = currentDistance + weight;
       
-      console.log(`  Edge from ${neighborId} with weight ${weight} gives new distance ${newDistance}`);
-      console.log(`  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
+      debugLog(debug, `  Edge from ${neighborId} with weight ${weight} gives new distance ${newDistance}`);
+      debugLog(debug, `  Current distance to ${neighborId} is ${distances.get(neighborId)}`);
       
       // If we found a shorter path, update the distance and previous node
       const currentNeighborDistance = distances.has(neighborId) ? distances.get(neighborId)! : Infinity;
       if (newDistance < currentNeighborDistance) {
-        console.log(`  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
+        debugLog(debug, `  Updating distance to ${neighborId} from ${currentNeighborDistance} to ${newDistance}`);
         distances.set(neighborId, newDistance);
         previous.set(neighborId, currentNodeId);
       } else {
-        console.log(`  No update needed for ${neighborId}`);
+        debugLog(debug, `  No update needed for ${neighborId}`);
       }
       
       edge = edge.next_to;
@@ -246,10 +256,10 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     
     // Find the next node for visualization
     const nextNodeId = findNodeWithSmallestDistance(unvisited, distances);
-    console.log(`Next node to process: ${nextNodeId}`);
-    console.log(`Current distances: ${[...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
-    console.log(`Visited nodes: ${Array.from(visited).join(', ')}`);
-    console.log(`Unvisited nodes: ${Array.from(unvisited).join(', ')}`);
+    debugLog(debug, `Next node to process: ${nextNodeId}`);
+    debugLog(debug, `Current distances: ${[...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
+    debugLog(debug, `Visited nodes: ${Array.from(visited).join(', ')}`);
+    debugLog(debug, `Unvisited nodes: ${Array.from(unvisited).join(', ')}`);
     
     // Record the current step
     steps.push(createDijkstraStep(
@@ -262,9 +272,9 @@ export function dijkstra(graph: Graph, startNodeId: string): DijkstraResult {
     ));
   }
   
-  console.log("Algorithm completed");
-  console.log(`Final distances: ${[...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
-  console.log(`Final previous map: ${[...previous.entries()].map(([k,v]) => `${k}->${v}`).join(', ')}`);
+  debugLog(debug, "Algorithm completed");
+  debugLog(debug, `Final distances: ${[...distances.entries()].map(([k,v]) => `${k}:${v}`).join(', ')}`);
+  debugLog(debug, `Final previous map: ${[...previous.entries()].map(([k,v]) => `${k}->${v}`).join(', ')}`);
   
   return {
     steps,

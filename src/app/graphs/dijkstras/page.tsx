@@ -14,6 +14,13 @@ import {
   Graph
 } from "@/algorithms-core/graphs_common";
 
+// Helper function for conditional debug logging
+function debugLog(debug: boolean, ...args: any[]): void {
+  if (debug) {
+    console.log(...args);
+  }
+}
+
 const DijkstrasPage: FC = () => {
   const [graph, setGraph] = useState<Graph | null>(null);
   const [highlightedNodes, setHighlightedNodes] = useState<NodeHighlight[]>([]);
@@ -27,6 +34,7 @@ const DijkstrasPage: FC = () => {
 
   const [graphDensity, setGraphDensity] = useState<number>(0.1);
   const [graphSize, setGraphSize] = useState<number>(20);
+  const [debug, setDebug] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   // Initialize graph on mount with the correct dependencies
@@ -45,19 +53,19 @@ const DijkstrasPage: FC = () => {
 
   const handleRunDijkstra = () => {
     if (!startNodeId || !graph) {
-      console.error("Missing start node or no graph");
+      debugLog(debug, "Missing start node or no graph");
       return;
     }
 
     try {
-      const result = dijkstra(graph, startNodeId);
-      console.log("Dijkstra algorithm completed. Steps:", result.steps.length);
+      const result = dijkstra(graph, startNodeId, debug);
+      debugLog(debug, "Dijkstra algorithm completed. Steps:", result.steps.length);
       setAlgorithmResult(result);
       setCurrentStepIndex(0);
       setIsRunning(true);
       updateVisualization(result.steps[0], result);
     } catch (error) {
-      console.error("Error running Dijkstra's algorithm:", error);
+      debugLog(debug, "Error running Dijkstra's algorithm:", error);
     }
   };
 
@@ -137,12 +145,12 @@ const DijkstrasPage: FC = () => {
   const updateVisualization = (step: DijkstraStep, resultToUse?: DijkstraResult) => {
     const result = resultToUse || algorithmResult;
     if (!startNodeId || !result) {
-      console.error("Cannot update visualization: missing data");
+      debugLog(debug, "Cannot update visualization: missing data");
       return;
     }
 
-    console.log("Updating visualization for step:", currentStepIndex);
-    console.log("Step data:", {
+    debugLog(debug, "Updating visualization for step:", currentStepIndex);
+    debugLog(debug, "Step data:", {
       currentNodeId: step.currentNodeId,
       visitedCount: step.visited.size,
       unvisitedCount: step.unvisited.size
@@ -295,7 +303,7 @@ const DijkstrasPage: FC = () => {
                   >
                     Reset Graph
                   </button>
-                  {/* input value  */}
+                  {/* Graph configuration inputs */}
                   <input 
                     type="number" 
                     value={graphDensity || ""} 
@@ -305,16 +313,25 @@ const DijkstrasPage: FC = () => {
                     step="0.1"
                     max={1}
                   />
-
                   <input 
-                    type ="number"
-                    value= {graphSize || ""}
+                    type="number"
+                    value={graphSize || ""}
                     onChange={(e) => setGraphSize(Number(e.target.value))}
                     placeholder="Enter Graph Size"
                     className="px-4 py-2 rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     min={2}
                     max={100}
                   />
+                  {/* Debug mode toggle */}
+                  <label className="flex items-center px-4 py-2 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={debug}
+                      onChange={(e) => setDebug(e.target.checked)}
+                      className="mr-2"
+                    />
+                    Debug Mode
+                  </label>
                 </div>
               </div>
             </div>
