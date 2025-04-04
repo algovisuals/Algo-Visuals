@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Algorithm Visualizer",
+  title: "Algo-Visuals",
   description: "An interactive platform to visualize and learn about algorithms and data structures",
 };
 
