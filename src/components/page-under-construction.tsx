@@ -25,7 +25,7 @@ const UnderConstructionPage = () => {
             Under Construction
           </h1>
           <p className="mt-6 text-xl text-gray-300 max-w-2xl mx-auto">
-            We're building this interactive visualization. Check back soon to explore this algorithm in detail.
+            We&apos;re building this interactive visualization. Check back soon to explore this algorithm in detail.
           </p>
           
           {/* Construction animation */}
