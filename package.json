@@ -38,7 +38,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5"
   },
-  "description": "Algorithm Visualizer is an interactive web application that demonstrates how classic algorithms work through dynamic, animated visualizations. Built with a modern, widely adopted tech stack, the project is designed for performance, scalability, and an engaging user experience.",
+  "description": "Algo Visuals is an interactive web application that demonstrates how classic algorithms work through dynamic, animated visualizations. Built with a modern, widely adopted tech stack, the project is designed for performance, scalability, and an engaging user experience.",
   "main": "index.js",
   "author": "",
   "license": "ISC"
