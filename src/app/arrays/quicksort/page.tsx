@@ -125,9 +125,11 @@ const QuickSortPage: FC = () => {
               opt3Action={() => {}} 
               isAutoStepping={isAutoStepping}
             />
-            <div className="p-4 rounded-lg flex-1">
+            <div className="p-4 rounded-lg flex-1 flex flex-col items-center">
               <ArrayVisualizer step={currentStep} />
-              <ArrayBase array = {currentStep.arr} pivotIndex = {currentStep.pivotIndex} comparing = {currentStep.comparing}/>
+              <div className="w-full mt-6">
+                <ArrayBase array={currentStep.arr} pivotIndex={currentStep.pivotIndex} comparing={currentStep.comparing}/>
+              </div>
             </div>
           </div>
         </div>

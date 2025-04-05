@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, FC, useRef } from "react";
+import { useEffect, FC, useRef, useState } from "react";
 import * as d3 from "d3";
 
 interface ArrayBaseProps {
@@ -11,19 +11,52 @@ interface ArrayBaseProps {
 
 const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
     const svgRef = useRef<SVGSVGElement | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+    // Update dimensions when window resizes
+    useEffect(() => {
+        const updateDimensions = () => {
+            if (containerRef.current) {
+                setDimensions({
+                    width: containerRef.current.clientWidth,
+                    height: Math.max(200, containerRef.current.clientHeight) // Minimum height of 200px
+                });
+            }
+        };
+
+        // Initial dimensions
+        updateDimensions();
+
+        // Add resize listener
+        window.addEventListener('resize', updateDimensions);
+        
+        // Clean up
+        return () => window.removeEventListener('resize', updateDimensions);
+    }, []);
 
     useEffect(() => {
+        if (dimensions.width === 0 || array.length === 0) return;
+
         const svg = d3.select(svgRef.current);
         svg.selectAll("*").remove();
 
-        const boxSize = 50;
-        const spacing = 10;
-
-        const width = array.length * (boxSize + spacing) - spacing;
-        const height = 200;
-
+        // Fixed box and spacing configuration
+        const boxSize = 50;     // Fixed box size
+        const spacing = 10;     // Fixed spacing between boxes
+        
+        // How many boxes can fit in a row
+        const boxesPerRow = Math.floor((dimensions.width + spacing) / (boxSize + spacing));
+        
+        // Calculate required rows
+        const rows = Math.ceil(array.length / boxesPerRow);
+        
+        // Calculate total height needed for all rows
+        const totalHeight = rows * (boxSize + spacing) + spacing;
+        
         // Set SVG dimensions
-        svg.attr("width", width).attr("height", height);
+        svg.attr("width", dimensions.width)
+           .attr("height", totalHeight);
 
         // Draw array boxes
         svg
@@ -32,13 +65,19 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         .enter()
         .append("rect")
         .attr("class", "array-box")
-        .attr("x", (d, i) => i * (boxSize + spacing))
-        .attr("y", 50)
+        .attr("x", (d, i) => {
+            const col = i % boxesPerRow;
+            return col * (boxSize + spacing) + spacing;
+        })
+        .attr("y", (d, i) => {
+            const row = Math.floor(i / boxesPerRow);
+            return row * (boxSize + spacing) + spacing;
+        })
         .attr("width", boxSize)
         .attr("height", boxSize)
         .attr("stroke", "black")
         .attr("fill", (d, i) => {
-            if (pivotIndex !== undefined && i == pivotIndex) return "red";
+            if (pivotIndex !== undefined && i === pivotIndex) return "red";
             if (comparing && comparing.includes(i)) return "orange";
             return "white";
         })
@@ -51,17 +90,26 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         .enter()
         .append("text")
         .attr("class", "array-value")
-        .attr("x", (d, i) => i * (boxSize + spacing) + boxSize / 2)
-        .attr("y", 50 + boxSize / 2 + 5)
+        .attr("x", (d, i) => {
+            const col = i % boxesPerRow;
+            return col * (boxSize + spacing) + spacing + boxSize / 2;
+        })
+        .attr("y", (d, i) => {
+            const row = Math.floor(i / boxesPerRow);
+            return row * (boxSize + spacing) + spacing + boxSize / 2 + 5;
+        })
         .attr("text-anchor", "middle")
         .attr("font-size", "18px")
         .attr("font-weight", "bold")
         .text(d => d);
-    }, [array, comparing, pivotIndex]); // Re-run if the array changes
+    }, [array, comparing, pivotIndex, dimensions]); // Re-run if the array or dimensions change
 
     return (
-        <div className="flex justify-center items-center">
-            <svg ref={svgRef}></svg>
+        <div 
+            ref={containerRef} 
+            className="flex justify-center items-center w-full h-full"
+        >
+            <svg ref={svgRef} className="mx-auto"></svg>
         </div>
     );
 };
