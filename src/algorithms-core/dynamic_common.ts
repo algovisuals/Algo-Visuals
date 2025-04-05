@@ -1,4 +1,9 @@
 export function computeShortestPath(dpValues: number[][]) {
+  // Handle empty input case
+  if (!dpValues || dpValues.length === 0) {
+    throw new Error("Grid cannot be empty");
+  }
+
   const rows = dpValues.length;
   const cols = dpValues[0].length;
 
@@ -6,7 +11,7 @@ export function computeShortestPath(dpValues: number[][]) {
   const distances = Array(rows).fill(0).map(() => Array(cols).fill(Infinity));
   const previous = Array(rows).fill(0).map(() => Array(cols).fill(null));
 
-  // Set starting point distance to 0
+  // Set starting point distance to its value
   distances[0][0] = dpValues[0][0];
 
   // Compute shortest distances using dynamic programming
