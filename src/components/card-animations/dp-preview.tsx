@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { motion, useInView, useAnimation } from "framer-motion";
+import { computeShortestPath } from "@/algorithms-core/dynamic_common";
 
 // DPPreview component for dynamic programming - completely redesigned
 const DPPreview = () => {
@@ -78,11 +79,9 @@ const DPPreview = () => {
     [9, 10, 12, 14, 16]
   ];
   
-  // Define optimal path coordinates
-  const optimalPath = [
-    [0,0], [0,1], [1,1], [1,2], [2,2], [2,3], [3,3], [4,3], [4,4]
-  ];
-  
+  // Compute the shortest path
+  const optimalPath = computeShortestPath(dpValues);
+
   // Convert path to SVG path string
   const createPathString = () => {
     let pathString = "";
@@ -190,25 +189,26 @@ const DPPreview = () => {
       </defs>
       
       {/* Final arrowhead segment */}
-      <motion.path
-        d={(() => {
-          const path = optimalPath;
-          const secondLast = path[path.length - 2];
-          const last = path[path.length - 1];
-          
-          const x1 = 30 + (secondLast[1] * (cellSize + spacing)) + cellSize/2;
-          const y1 = 30 + (secondLast[0] * (cellSize + spacing)) + cellSize/2;
-          const x2 = 30 + (last[1] * (cellSize + spacing)) + cellSize/2;
-          const y2 = 30 + (last[0] * (cellSize + spacing)) + cellSize/2;
-          
-          return `M${x1},${y1} L${x2},${y2}`;
-        })()}
-        stroke="#9CA3AF"
-        strokeWidth={2}
-        markerEnd="url(#arrowhead)"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={pathControls}
-      />
+      {optimalPath.length > 1 && (
+        <motion.path
+          d={(() => {
+            const secondLast = optimalPath[optimalPath.length - 2];
+            const last = optimalPath[optimalPath.length - 1];
+            
+            const x1 = 30 + (secondLast[1] * (cellSize + spacing)) + cellSize/2;
+            const y1 = 30 + (secondLast[0] * (cellSize + spacing)) + cellSize/2;
+            const x2 = 30 + (last[1] * (cellSize + spacing)) + cellSize/2;
+            const y2 = 30 + (last[0] * (cellSize + spacing)) + cellSize/2;
+            
+            return `M${x1},${y1} L${x2},${y2}`;
+          })()}
+          stroke="#9CA3AF"
+          strokeWidth={2}
+          markerEnd="url(#arrowhead)"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={pathControls}
+        />
+      )}
     </motion.svg>
   );
 };
