@@ -8,7 +8,7 @@ function debugLog(debug: boolean, ...args: unknown[]): void {
 }
 
 // Set to true to enable debug logs in tests
-const DEBUG = true;
+const DEBUG = false;
 
 describe('Dynamic Programming - Shortest Path', () => {
   describe('computeShortestPath', () => {
