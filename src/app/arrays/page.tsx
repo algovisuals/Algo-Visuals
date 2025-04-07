@@ -18,49 +18,49 @@ const cardInfo: {
         status: "working"
     },
     {
-        href: "/mergesort",
+        href: "/arrays/mergesort",
         card_name: "Merge Sort",
         card_text: "Merge Sort is a sorting algorithm that uses a divide and conquer strategy to sort a list by repeatedly dividing it into smaller sublists",
         status: "wip"
     },
     {
-        href: "/bubblesort",
+        href: "/arrays/bubblesort",
         card_name: "Bubble Sort",
         card_text: "Bubble Sort is a sorting algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
         status: "wip"
     },
     {
-        href: "/binarysearch",
+        href: "/arrays/binarysearch",
         card_name: "Binary Search",
         card_text: "Binary Search is a searching algorithm that finds the position of a target value within a sorted array by repeatedly dividing the search space in half.",
         status: "wip"
     },
     {
-        href: "/insertion",
+        href: "/arrays/insertion",
         card_name: "Insertion Sort",
         card_text: "Insertion Sort is a sorting algorithm that builds the final sorted array one item at a time, by taking elements and placing them in their correct position.",
         status: "wip"
     },
     {
-        href: "/selectionsort",
+        href: "/arrays/selectionsort",
         card_name: "Selection Sort",
         card_text: "Selection Sort is a sorting algorithm that repeatedly selects the smallest element from the unsorted portion and puts it at the beginning.",
         status: "wip"
     },
     {
-        href: "/twopointer",
+        href: "/arrays/twopointer",
         card_name: "Two Pointer Technique",
         card_text: "Two Pointer is an algorithm technique where two pointers iterate through a data structure, often moving independently at different speeds or directions.",
         status: "wip"
     },
     {
-        href: "/slidingdoor",
+        href: "/arrays/slidingdoor",
         card_name: "Sliding Window",
         card_text: "Sliding Window is a computational technique that aims to reduce the use of nested loops and replace it with a single loop, reducing time complexity.",
         status: "wip" 
     },
     {
-        href: "/dynamicarrays",
+        href: "/arrays/dynamicarrays",
         card_name: "Dynamic Arrays",
         card_text: "Dynamic Arrays automatically resize themselves when more storage is needed, understanding this data structure is crucial for efficient programming.",
         status: "wip"

@@ -1,11 +1,11 @@
 "use client"; // needed for d3
-
 import React, { useState, FC, useRef } from "react";
 
 // webpage visuals
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Sidebar from "@/components/code-side-bar";
+import ArrayBase from "@/components/array-base";
 
 const intervalMilliseconds = 500; // interval for auto-stepping
 
@@ -16,7 +16,7 @@ import { SortStep, getQuickSortSteps } from "@/algorithms-core/quicksort";
 const QuickSortPage: FC = () => {
   // Initialize state with a random array wrapped in a SortStep.
   const [currentStep, setCurrentStep] = useState<SortStep>(() => {
-    const initial = generateRandomArray(25, 1, 1000); // generates 25 bars from 1 to 1000
+    const initial = generateRandomArray(25, 1, 50); // generates 25 bars from 1 to 50
     return { arr: initial };
   });
 
@@ -110,6 +110,8 @@ const QuickSortPage: FC = () => {
   };
 
 
+  //declaring constant variable numbers and assigning it to the array of numbers
+
   return (
     <div className="flex flex-col min-h-screen transition-colors">
       <Header />
@@ -123,8 +125,11 @@ const QuickSortPage: FC = () => {
               opt3Action={() => {}} 
               isAutoStepping={isAutoStepping}
             />
-            <div className="p-4 rounded-lg flex-1">
+            <div className="p-4 rounded-lg flex-1 flex flex-col items-center">
               <ArrayVisualizer step={currentStep} />
+              <div className="flex justify-center items-center w-full mt-6">
+                <ArrayBase array={currentStep.arr} pivotIndex={currentStep.pivotIndex} comparing={currentStep.comparing}/>
+              </div>
             </div>
           </div>
         </div>
