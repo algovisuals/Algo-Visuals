@@ -67,7 +67,7 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         
         // Set SVG dimensions to exactly what we need
         svg.attr("width", rowWidth)
-           .attr("height", totalHeight);
+            .attr("height", totalHeight);
 
         // Draw array boxes
         svg

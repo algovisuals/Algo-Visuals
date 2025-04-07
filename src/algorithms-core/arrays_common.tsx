@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect, useState, useRef } from "react";
 import { SortStep } from "@/algorithms-core/quicksort"
 
 export function generateRandomArray(length: number, min: number, max: number): number[] {
@@ -22,13 +22,30 @@ export interface ArrayVisualizerProps {
 export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
   const { arr, pivotIndex, comparing } = step;
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [dimensions, setDimensions] = useState({width: 0, height: 0});
 
   useEffect(() => {
-    if (!svgRef.current) return;
+  
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: 400,
+        });
+      }
+    };
+
+    updateDimensions();
+    
+    window.addEventListener('resize', updateDimensions);
+  }, []);
+
+  useEffect(() => {
+    if (!svgRef.current || !containerRef.current) return;
 
     const svg = d3.select(svgRef.current);
-    const width = svgRef.current?.clientWidth || 800;
-    const height = 400;
+    const {width, height} = dimensions;
 
     let g = svg.select<SVGGElement>("g");
     if (g.empty()) {
@@ -101,16 +118,16 @@ export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
       .attr("y", height)
       .attr("height", 0)
       .remove();
-  }, [arr, pivotIndex, comparing]);
+  }, [arr, pivotIndex, comparing, dimensions]);
 
   return (
-    <div className="w-full flex justify-center">
-      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
+    <div className="w-full flex justify-center" ref={containerRef}>
+      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg w-full">
         <svg 
           ref={svgRef} 
           width={800} 
           height={400} 
-          className="bg-white dark:bg-gray-800" 
+          className="bg-white dark:bg-gray-800 w-full" 
         />
       </div>
     </div>
