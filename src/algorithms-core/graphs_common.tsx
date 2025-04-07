@@ -11,7 +11,7 @@ export interface Node {
   y?: number;
   fx?: number | null;
   fy?: number | null;
-  color?: string; // Optional stroke color propertyß
+  color?: string; // Optional stroke color property
   fillColor?: string; // Optional fill color property
   useGradient?: boolean; // Optional gradient usage property
 }
