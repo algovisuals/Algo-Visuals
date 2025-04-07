@@ -14,6 +14,33 @@ import {
   Graph
 } from "@/algorithms-core/graphs_common";
 
+// Define theme colors for the visualization in one place for easy customization
+const COLORS = {
+  // Node colors
+  START_NODE: { color: "hsl(120, 100%, 40%)", fillColor: "hsl(120, 100%, 35%)" },
+  CURRENT_NODE: { color: "hsl(270, 100%, 70%)", fillColor: "hsl(270, 100%, 60%)" },
+  VISITED_NODE: { color: "hsl(217, 100%, 18%)", fillColor: "hsl(217, 100%, 30%)" },
+  NEXT_NODE: { color: "hsl(45, 100%, 50%)", fillColor: "hsl(45, 100%, 45%)" },
+  
+  // Default node colors when not highlighted
+  DEFAULT_NODE: { color: "hsl(210, 100%, 50%)", fillColor: "hsl(210, 100%, 40%)" },
+  
+  // Edge colors
+  SHORTEST_PATH: "hsl(150, 100%, 40%)",
+  CONSIDERING_EDGE: "hsl(200, 100%, 60%)",
+  
+  // Background colors
+  BACKGROUND: { 
+    gradientStart: "hsl(220, 13%, 95%)", 
+    gradientEnd: "hsl(220, 13%, 90%)",
+    darkGradientStart: "hsl(0, 0%, 12%)",
+    darkGradientEnd: "hsl(240, 87%, 30%)"
+  },
+  
+  // Control whether gradients are used for node fills
+  USE_GRADIENT: true
+};
+
 // Helper function for conditional debug logging
 function debugLog(debug: boolean, ...args: unknown[]): void {
   if (debug) {
@@ -33,23 +60,39 @@ const DijkstrasPage: FC = () => {
   const autoPlayIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [graphDensity, setGraphDensity] = useState<number>(0.1);
-  const [graphSize, setGraphSize] = useState<number>(20);
+  const [graphSize, setGraphSize] = useState<number>(14);
   const [debug, setDebug] = useState<boolean>(false);
+  const [useGradient, setUseGradient] = useState<boolean>(COLORS.USE_GRADIENT);
+  
+  // Add background color state
+  const [backgroundOptions, setBackgroundOptions] = useState({
+    gradientStart: COLORS.BACKGROUND.gradientStart,
+    gradientEnd: COLORS.BACKGROUND.gradientEnd,
+    useGradient: true
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
-  // Initialize graph on mount with the correct dependencies
+  
+  /**
+   * Effect to initialize the graph when the component mounts or when graphSize or graphDensity changes.
+   */
   useEffect(() => {
-    const newGraph = createRandomGraph(graphSize, graphDensity);
-    setGraph(newGraph);
-    // Set start node from the available node keys
-    const nodeIds = Object.keys(newGraph.nodes);
-    if (nodeIds.length > 0) {
-      setStartNodeId(nodeIds[0]);
-      setHighlightedNodes([
-        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" } // Start (green)
-      ]);
-    }
-  }, [graphSize, graphDensity]);
+    handleResetGraph();
+  }, [graphSize, graphDensity, useGradient]);
+
+  // Effect to handle  dark mode
+  useEffect(() => {
+    const isDark = typeof window !== 'undefined' && 
+                  window.matchMedia && 
+                  window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Update background colors based on dark mode
+    setBackgroundOptions({
+      gradientStart: isDark ? COLORS.BACKGROUND.darkGradientStart : COLORS.BACKGROUND.gradientStart,
+      gradientEnd: isDark ? COLORS.BACKGROUND.darkGradientEnd : COLORS.BACKGROUND.gradientEnd,
+      useGradient: true
+    });
+  }, []);
 
   const handleRunDijkstra = () => {
     if (!startNodeId || !graph) {
@@ -79,14 +122,47 @@ const DijkstrasPage: FC = () => {
     setCurrentStepIndex(0);
     setAlgorithmResult(null);
 
-    const newGraph = createRandomGraph(graphSize, graphDensity);
+    const newGraph = createRandomGraph(
+      graphSize, 
+      graphDensity,
+      1, // minValue
+      30, // maxValue
+      {
+        defaultColor: COLORS.DEFAULT_NODE.color,
+        defaultFillColor: COLORS.DEFAULT_NODE.fillColor,
+        useGradient: useGradient
+      }
+    );
     setGraph(newGraph);
     const nodeIds = Object.keys(newGraph.nodes);
     if (nodeIds.length > 0) {
-      setStartNodeId(nodeIds[0]);
-      setHighlightedNodes([
-        { nodeId: nodeIds[0], color: "hsl(120,100%,40%)" }
-      ]);
+      const startId = nodeIds[0];
+      setStartNodeId(startId);
+      
+      // Create a highlighted nodes array with ALL nodes to ensure proper coloring
+      const newHighlightedNodes: NodeHighlight[] = [];
+      
+      // Add the start node with START_NODE color
+      newHighlightedNodes.push({ 
+        nodeId: startId, 
+        color: COLORS.START_NODE.color,
+        fillColor: COLORS.START_NODE.fillColor,
+        useGradient: useGradient
+      });
+      
+      // Add all other nodes with DEFAULT_NODE color
+      nodeIds.forEach(nodeId => {
+        if (nodeId !== startId) {
+          newHighlightedNodes.push({
+            nodeId,
+            color: COLORS.DEFAULT_NODE.color,
+            fillColor: COLORS.DEFAULT_NODE.fillColor,
+            useGradient: useGradient
+          });
+        }
+      });
+      
+      setHighlightedNodes(newHighlightedNodes);
       setHighlightedEdges([]);
     }
   };
@@ -144,7 +220,7 @@ const DijkstrasPage: FC = () => {
 
   const updateVisualization = (step: DijkstraStep, resultToUse?: DijkstraResult) => {
     const result = resultToUse || algorithmResult;
-    if (!startNodeId || !result) {
+    if (!startNodeId || !result || !graph) {
       debugLog(debug, "Cannot update visualization: missing data");
       return;
     }
@@ -159,57 +235,102 @@ const DijkstrasPage: FC = () => {
     const newHighlightedNodes: NodeHighlight[] = [];
     const newHighlightedEdges: EdgeHighlight[] = [];
 
-    // Always highlight the start node.
-    newHighlightedNodes.push({ nodeId: startNodeId, color: "hsl(120,100%,40%)" });
+    // Always highlight the start node
+    newHighlightedNodes.push({ 
+      nodeId: startNodeId, 
+      color: COLORS.START_NODE.color,
+      fillColor: COLORS.START_NODE.fillColor,
+      useGradient: useGradient
+    });
 
-    // Highlight current processing node.
+    // Highlight current processing node
     if (step.currentNodeId) {
       newHighlightedNodes.push({
         nodeId: step.currentNodeId,
-        color: "hsl(270,100%,70%)"
+        color: COLORS.CURRENT_NODE.color,
+        fillColor: COLORS.CURRENT_NODE.fillColor,
+        useGradient: useGradient
       });
+      
+      // Highlight edges from current node to unvisited nodes being considered
+      if (graph && step.currentNodeId) {
+        const currentNode = graph.nodes[step.currentNodeId];
+        
+        // Iterate through outgoing edges
+        let edge = currentNode.outgoing_edges;
+        while (edge !== null) {
+          // Only highlight edges to unvisited nodes (those we're considering)
+          if (step.unvisited.has(edge.to_node.id)) {
+            newHighlightedEdges.push({
+              sourceId: step.currentNodeId,
+              targetId: edge.to_node.id,
+              color: COLORS.CONSIDERING_EDGE
+            });
+          }
+          edge = edge.next_from;
+        }
+      }
     }
 
-    // Mark visited nodes in blue.
+    // Highlight fully visited nodes
     step.visited.forEach(nodeId => {
       if (nodeId !== startNodeId && nodeId !== step.currentNodeId) {
         newHighlightedNodes.push({
           nodeId,
-          color: "hsl(210,100%,50%)"
+          color: COLORS.VISITED_NODE.color,
+          fillColor: COLORS.VISITED_NODE.fillColor,
+          useGradient: useGradient
         });
       }
     });
 
-    // Highlight next shortest (unvisited) node in yellow.
+    // Highlight next shortest (unvisited) node in yellow
     if (step.currentShortest && step.currentShortest !== startNodeId) {
       newHighlightedNodes.push({
         nodeId: step.currentShortest,
-        color: "hsl(45,100%,50%)"
+        color: COLORS.NEXT_NODE.color,
+        fillColor: COLORS.NEXT_NODE.fillColor,
+        useGradient: useGradient
       });
     }
 
-    // If the shortest path has been reconstructed on the final step, highlight that path in gold.
-    if (result.shortestPath && currentStepIndex === result.steps.length - 1) {
-      const path = result.shortestPath;
-      for (let i = 1; i < path.length; i++) {
-        newHighlightedEdges.push({
-          sourceId: path[i - 1],
-          targetId: path[i],
-          color: "gold"
+    // Track which nodes are highlighted
+    const highlightedNodeIds = new Set(newHighlightedNodes.map(n => n.nodeId));
+
+    // For all non-highlighted nodes, preserve their custom colors from the graph
+    Object.keys(graph.nodes).forEach(nodeId => {
+      if (!highlightedNodeIds.has(nodeId)) {
+        const node = graph.nodes[nodeId];
+        // Always add non-highlighted nodes to ensure they get their colors from the graph
+        newHighlightedNodes.push({
+          nodeId,
+          color: node.color || COLORS.DEFAULT_NODE.color,
+          fillColor: node.fillColor || COLORS.DEFAULT_NODE.fillColor,
+          useGradient: node.useGradient !== undefined ? node.useGradient : useGradient
         });
       }
-    } else {
-      // Otherwise, add edges representing the relaxed paths.
-      step.visited.forEach(nodeId => {
-        const prevNodeId = step.previous.get(nodeId);
-        if (prevNodeId) {
-          newHighlightedEdges.push({
-            sourceId: prevNodeId,
-            targetId: nodeId,
-            color: "hsl(210,100%,50%)"
-          });
+    });
+
+    // Add path visualization for current shortest paths
+    if (step.distances.size > 0 && step.previous.size > 0) {
+      // Highlight the shortest path to the current shortest node
+      if (step.currentShortest) {
+        let pathNodeId = step.currentShortest;
+        while (pathNodeId && pathNodeId !== startNodeId) {
+          const prevNodeId = step.previous.get(pathNodeId);
+          if (prevNodeId) {
+            newHighlightedEdges.push({
+              sourceId: prevNodeId,
+              targetId: pathNodeId,
+              color: COLORS.SHORTEST_PATH,
+              width: 3 // Make shortest path edges thicker
+            });
+            pathNodeId = prevNodeId;
+          } else {
+            break;
+          }
         }
-      });
+      }
     }
 
     setHighlightedNodes(newHighlightedNodes);
@@ -248,6 +369,7 @@ const DijkstrasPage: FC = () => {
                     graph={graph} 
                     highlightedNodes={highlightedNodes}
                     highlightedEdges={highlightedEdges}
+                    backgroundOptions={backgroundOptions}
                   />
                 }
               </div>
@@ -303,35 +425,56 @@ const DijkstrasPage: FC = () => {
                   >
                     Reset Graph
                   </button>
-                  {/* Graph configuration inputs */}
-                  <input 
-                    type="number" 
-                    value={graphDensity || ""} 
-                    onChange={(e) => setGraphDensity(Number(e.target.value))} 
-                    placeholder="Enter Graph Density" 
-                    className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                    step="0.1"
-                    max={1}
-                  />
-                  <input 
-                    type="number"
-                    value={graphSize || ""}
-                    onChange={(e) => setGraphSize(Number(e.target.value))}
-                    placeholder="Enter Graph Size"
-                    className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
-                    min={2}
-                    max={100}
-                  />
-                  {/* Debug mode toggle */}
-                  <label className="flex items-center px-4 py-2 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                    <input
-                      type="checkbox"
-                      checked={debug}
-                      onChange={(e) => setDebug(e.target.checked)}
-                      className="mr-2"
-                    />
-                    Debug Mode
-                  </label>
+                  
+                  {/* Graph & visualization configuration */}
+                  <div className="flex flex-wrap gap-2 w-full mt-4 justify-center items-center">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm">Density:</label>
+                      <input 
+                        type="number" 
+                        value={graphDensity} 
+                        onChange={(e) => setGraphDensity(Math.min(1, Math.max(0.05, Number(e.target.value))))} 
+                        className="px-3 py-1 w-20 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        step="0.05"
+                        min="0.05"
+                        max="1"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm">Size:</label>
+                      <input 
+                        type="number"
+                        value={graphSize}
+                        onChange={(e) => setGraphSize(Math.min(100, Math.max(2, Number(e.target.value))))}
+                        className="px-3 py-1 w-20 rounded-md border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        min="2"
+                        max="100"
+                      />
+                    </div>
+                    
+                    {/* Gradient toggle */}
+                    <label className="flex items-center px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={useGradient}
+                        onChange={(e) => setUseGradient(e.target.checked)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">Use Gradients</span>
+                    </label>
+                    
+                    {/* Debug mode toggle */}
+                    <label className="flex items-center px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={debug}
+                        onChange={(e) => setDebug(e.target.checked)}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">Debug Mode</span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
