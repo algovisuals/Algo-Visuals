@@ -46,23 +46,28 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         const maxBoxPerRow = 15;
         const spacing = 10;     // Fixed spacing between boxes
         
-        // How many boxes can fit in a row
+        // How many boxes fit in a row (limited by maxBoxPerRow)
         const boxesPerRow = Math.min(
             Math.floor((dimensions.width + spacing) / (boxSize + spacing)),
-            maxBoxPerRow
+            maxBoxPerRow,
+            array.length  // Don't use more boxes per row than we have elements
         );
-        
-        //const boxesPerRow = Math.floor((dimensions.width + spacing) / (boxSize + spacing));
         
         // Calculate required rows
         const rows = Math.ceil(array.length / boxesPerRow);
         
+        // Calculate exact width needed for the current number of boxes per row
+        const rowWidth = Math.min(
+            boxesPerRow * (boxSize + spacing) + spacing,
+            array.length * (boxSize + spacing) + spacing
+        );
+        
         // Calculate total height needed for all rows
         const totalHeight = rows * (boxSize + spacing) + spacing;
         
-        // Set SVG dimensions
-        svg.attr("width", dimensions.width)
-            .attr("height", totalHeight);
+        // Set SVG dimensions to exactly what we need
+        svg.attr("width", rowWidth)
+           .attr("height", totalHeight);
 
         // Draw array boxes
         svg
