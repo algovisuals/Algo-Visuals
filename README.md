@@ -3,14 +3,18 @@
 
 **https://algovisuals.com**
 
+*Website not working?* Check the status of my applications: https://up.solnas.net/status/nevryk
+
 Algo-Visuals is an interactive web application that demonstrates how classic algorithms work through dynamic, animated visualsizations. Built with a modern, widely adopted tech stack, the project is designed for performance, scalability, and an engaging user experience.
 
-## Main Developers
+
+
+## Developers:
 
 | Name            | Role               | GitHub                                         |
 | --------------- | ------------------ | ---------------------------------------------- |
-| **Nevryk** | Full-Stack Developer     | [nsoliven](https://github.com/nsoliven) |
-| **Kayleen**     | Full-Stack Developer | [kayuh7](https://github.com/kayuh7)         |
+| **Nevryk** | Main Developer     | [nsoliven](https://github.com/nsoliven) |
+| **Kayleen**     | Contributer | [kayuh7](https://github.com/kayuh7) |
 
 
 ---

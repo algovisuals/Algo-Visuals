@@ -1,7 +1,9 @@
+import UnderConstructionPage from "@/components/page-under-construction"
+
 const page = () => {
     return (
-        <div>page</div>
+        <UnderConstructionPage />
     )
 }
 
-export default page
+export default page;
