@@ -43,10 +43,16 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
 
         // Fixed box and spacing configuration
         const boxSize = 50;     // Fixed box size
+        const maxBoxPerRow = 15;
         const spacing = 10;     // Fixed spacing between boxes
         
         // How many boxes can fit in a row
-        const boxesPerRow = Math.floor((dimensions.width + spacing) / (boxSize + spacing));
+        const boxesPerRow = Math.min(
+            Math.floor((dimensions.width + spacing) / (boxSize + spacing)),
+            maxBoxPerRow
+        );
+        
+        //const boxesPerRow = Math.floor((dimensions.width + spacing) / (boxSize + spacing));
         
         // Calculate required rows
         const rows = Math.ceil(array.length / boxesPerRow);
@@ -56,7 +62,7 @@ const ArrayBase: FC<ArrayBaseProps> = ({array, pivotIndex, comparing}) => {
         
         // Set SVG dimensions
         svg.attr("width", dimensions.width)
-           .attr("height", totalHeight);
+            .attr("height", totalHeight);
 
         // Draw array boxes
         svg

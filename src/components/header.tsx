@@ -66,7 +66,7 @@ const Header = () => {
                     <Link href="/trees" className="rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white flex items-center justify-center">Trees</Link>
                     <Link href="/linked-lists" className="rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white flex items-center justify-center">Linked Lists</Link>
                     <Link href="/heaps" className="rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white flex items-center justify-center">Heaps</Link>
-                    <Link href="/dynamic-programming" className="block rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white flex items-center justify-center">Dynamic Programming</Link>
+                    <Link href="/dynamic-programming" className="rounded-md px-3 py-2 text-base font-medium text-gray-300 hover:bg-gray-700 hover:text-white flex items-center justify-center">Dynamic Programming</Link>
                 </div>
             </div>
         )}

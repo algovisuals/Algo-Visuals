@@ -16,7 +16,7 @@ import { SortStep, getQuickSortSteps } from "@/algorithms-core/quicksort";
 const QuickSortPage: FC = () => {
   // Initialize state with a random array wrapped in a SortStep.
   const [currentStep, setCurrentStep] = useState<SortStep>(() => {
-    const initial = generateRandomArray(25, 1, 1000); // generates 25 bars from 1 to 1000
+    const initial = generateRandomArray(25, 1, 50); // generates 25 bars from 1 to 50
     return { arr: initial };
   });
 
@@ -127,7 +127,7 @@ const QuickSortPage: FC = () => {
             />
             <div className="p-4 rounded-lg flex-1 flex flex-col items-center">
               <ArrayVisualizer step={currentStep} />
-              <div className="w-full mt-6">
+              <div className="flex justify-center items-center w-full mt-6">
                 <ArrayBase array={currentStep.arr} pivotIndex={currentStep.pivotIndex} comparing={currentStep.comparing}/>
               </div>
             </div>
