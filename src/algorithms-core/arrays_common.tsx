@@ -39,6 +39,10 @@ export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
     updateDimensions();
     
     window.addEventListener('resize', updateDimensions);
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+    };
   }, []);
 
   useEffect(() => {
