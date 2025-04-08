@@ -1,33 +1,29 @@
-
-# Algo-Visuals (WIP NOT READY)
+Collecting workspace information# Algo-Visuals
 
 **https://algovisuals.com**
 
 *Website not working?* Check the status of my applications: https://up.solnas.net/status/nevryk
 
-Algo-Visuals is an interactive web application that demonstrates how classic algorithms work through dynamic, animated visualsizations. Built with a modern, widely adopted tech stack, the project is designed for performance, scalability, and an engaging user experience.
+Algo-Visuals is an interactive web application that demonstrates how classic algorithms work through dynamic, animated visualizations. Built with a modern, widely adopted tech stack, the project is designed for performance, scalability, and an engaging user experience.
 
-
-
-## Developers:
+## Developers
 
 | Name            | Role               | GitHub                                         |
 | --------------- | ------------------ | ---------------------------------------------- |
-| **Nevryk** | Main Developer     | [nsoliven](https://github.com/nsoliven) |
-| **Kayleen**     | Contributer | [kayuh7](https://github.com/kayuh7) |
-
+| **Nevryk**      | Main Developer     | [nsoliven](https://github.com/nsoliven)        |
+| **Kayleen**     | Contributor        | [kayuh7](https://github.com/kayuh7)            |
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack & Key Concepts](#tech-stack--key-concepts)
-- [Getting Started](#getting-started)
-- [Contributing](#contributing)
-- [License](#license)
-- [Final Remarks](#final-remarks)
+- Overview
+- Features
+- Implemented Algorithms
+- Tech Stack
+- Getting Started
+- Contributing
+- License
 
 ---
 
@@ -39,31 +35,43 @@ Algo-Visuals brings algorithms to life by showing each step through interactive 
 
 ## Features
 
-- **Interactive Visualizations:** Use D3.js and the Canvas API to render algorithm steps in real time.
-- **Smooth Animations:** Enhance user interactions with fluid transitions powered by Framer Motion.
-- **Modern Styling:** Build a responsive, clean interface using Tailwind CSS.
-- **Scalable Architecture:** Benefit from Next.js features such as server-side rendering (SSR) and static site generation (SSG) for improved performance and SEO.
+- **Interactive Visualizations:** Uses D3.js to render algorithm steps in real time
+- **Smooth Animations:** Enhances user interactions with fluid transitions powered by Framer Motion
+- **Modern Styling:** Features a responsive, clean interface using Tailwind CSS
+- **Scalable Architecture:** Leverages Next.js features for improved performance and SEO
+- **Algorithm Controls:** Step through algorithms manually or watch them execute automatically
 
 ---
 
-## Tech Stack & Key Concepts
+## Implemented Algorithms
+
+### Arrays
+- **Quick Sort:** Visualize the divide-and-conquer strategy with pivot selection and partitioning
+- *Coming Soon:* Merge Sort, Bubble Sort, Binary Search, Selection Sort, and more
+
+### Graphs
+- **Dijkstra's Algorithm:** Visualize finding the shortest paths in a weighted graph
+- *Coming Soon:* BFS, DFS, and more graph algorithms
+
+*Additional algorithm categories (Trees, Linked Lists, Heaps, Dynamic Programming) are under development*
+
+---
+
+## Tech Stack
 
 ### Next.js & React
-
-- **Next.js:** A React framework that enhances development with:
-  - **Server-Side Rendering (SSR):** Pages are rendered on the server on each request. This delivers fully rendered HTML to the client, which improves initial load times and boosts SEO.
-  - **Static Site Generation (SSG):** Pages are pre-rendered at build time, offering rapid delivery of static content. Ideal for pages that do not change frequently.
-- **React:** Powers the UI by enabling the creation of reusable components.
+- **Next.js:** A React framework that provides:
+  - Server-Side Rendering (SSR) for improved initial load times and SEO
+  - Static Site Generation (SSG) for rapid delivery of static content
+- **React:** Powers the UI with reusable components
 
 ### Styling & Animation
-
-- **Tailwind CSS:** A utility-first CSS framework that accelerates UI development and enforces design consistency.
-- **Framer Motion:** A React library that simplifies the implementation of smooth, declarative animations.
+- **Tailwind CSS:** A utility-first CSS framework for consistent styling
+- **Framer Motion:** For smooth, declarative animations
 
 ### Visualization
-
-- **D3.js:** A robust library for data-driven document manipulation, perfect for managing dynamic data visualizations.
-- **Canvas API:** Provides high-performance rendering for complex and dynamic visual content.
+- **D3.js:** A powerful library for data-driven visualizations
+- **TypeScript:** For type safety and enhanced developer experience
 
 ---
 
@@ -107,10 +115,10 @@ Algo-Visuals brings algorithms to life by showing each step through interactive 
 
 Contributions are welcome! To contribute:
 
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Make your changes and ensure they adhere to our coding standards.
-4. Submit a pull request with a detailed description of your changes.
+1. Fork the repository
+2. Create a new branch for your feature or bug fix
+3. Make your changes and ensure they adhere to our coding standards
+4. Submit a pull request with a detailed description of your changes
 
 Please open an issue first if you plan significant changes or need clarification on project goals.
 
@@ -118,12 +126,4 @@ Please open an issue first if you plan significant changes or need clarification
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-## Final Remarks
-
-Algo-Visuals is built on a robust, common modern web stack that leverages Next.js’s SSR and SSG for speed and SEO, React for dynamic user interfaces, Tailwind CSS for rapid styling, Framer Motion for smooth animations, and D3.js with the Canvas API for high-performance visualizations. This architecture not only ensures a great user experience but also provides a scalable foundation for future enhancements.
-
-Happy coding, and let’s bring algorithms to life!
+This project is licensed under the MIT License. See the LICENSE file for details.
