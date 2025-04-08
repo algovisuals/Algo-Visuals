@@ -1,4 +1,4 @@
-Collecting workspace information# Algo-Visuals
+# Algo-Visuals
 
 **https://algovisuals.com**
 
