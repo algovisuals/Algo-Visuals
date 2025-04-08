@@ -1,7 +1,6 @@
 import * as d3 from "d3";
 import { FC, useEffect, useRef, useState } from "react";
 
-
 // Node interface with outgoing and incoming edge lists
 export interface Node {
   id: string;
@@ -12,6 +11,9 @@ export interface Node {
   y?: number;
   fx?: number | null;
   fy?: number | null;
+  color?: string; // Optional stroke color property
+  fillColor?: string; // Optional fill color property
+  useGradient?: boolean; // Optional gradient usage property
 }
 
 // Edge interface with doubly-linked list pointers
@@ -206,20 +208,50 @@ export class Graph {
 }
 
 /**
- * 
- * @param nodeCount 
- * @param edgeDensity 
- * @param minValue 
- * @param maxValue 
- * @returns 
+ * Creates a random graph with the specified parameters
+ * @param nodeCount Number of nodes to create
+ * @param edgeDensity Density of edges (0-1), where 1 means all possible edges
+ * @param minValue Minimum value for node values
+ * @param maxValue Maximum value for node values
+ * @param nodeColorOptions Optional color settings for nodes
+ * @returns A new Graph instance
  */
-export function createRandomGraph(nodeCount: number, edgeDensity: number = 0.3, minValue: number = 1, maxValue: number = 20): Graph {
+export function createRandomGraph(
+  nodeCount: number, 
+  edgeDensity: number = 0.3, 
+  minValue: number = 1, 
+  maxValue: number = 20,
+  nodeColorOptions?: { 
+    defaultColor?: string;
+    defaultFillColor?: string;
+    useGradient?: boolean;
+  }
+): Graph {
   const graph = new Graph();
   
   // Create nodes
   for (let i = 0; i < nodeCount; i++) {
     const value = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-    graph.add_node(`node-${i}`, value);
+    
+    // Store node color options directly in the node object
+    const node: Node = {
+      id: `node-${i}`,
+      value,
+      outgoing_edges: null,
+      incoming_edges: null
+    };
+    
+    // Add custom color properties if provided
+    if (nodeColorOptions) {
+      // Ensure none of these are undefined
+      node.color = nodeColorOptions.defaultColor || "hsl(210, 100%, 50%)";
+      node.fillColor = nodeColorOptions.defaultFillColor || "hsl(210, 100%, 40%)";
+      // Explicitly set useGradient to avoid undefined
+      node.useGradient = nodeColorOptions.useGradient !== undefined ? 
+        nodeColorOptions.useGradient : true;
+    }
+    
+    graph.nodes[node.id] = node;
   }
   
   // Create random edges
@@ -280,6 +312,7 @@ export function createRandomGraph(nodeCount: number, edgeDensity: number = 0.3, 
   return graph;
 }
 
+
 // Helper function to shuffle array
 function shuffleArray<T>(array: T[]): void {
   for (let i = array.length - 1; i > 0; i--) {
@@ -288,16 +321,26 @@ function shuffleArray<T>(array: T[]): void {
   }
 }
 
-// Highlight interfaces
+// Enhanced Highlight interfaces - expanded to support more styling options
 export interface NodeHighlight {
   nodeId: string;
   color: string;
+  fillColor?: string; // Optional separate fill color
+  useGradient?: boolean; // Whether to use gradient (default true)
 }
 
 export interface EdgeHighlight {
   sourceId: string;
   targetId: string;
   color: string;
+  width?: number; // Optional line width
+}
+
+// Background color options interface
+export interface BackgroundOptions {
+  gradientStart?: string;
+  gradientEnd?: string;
+  useGradient?: boolean;
 }
 
 // GraphVisualizer props interface
@@ -308,6 +351,7 @@ export interface GraphVisualizerProps {
   highlightedNodes?: NodeHighlight[];
   highlightedEdges?: EdgeHighlight[];
   onNodeHover?: (nodeId: string | null) => void; // Add new callback prop
+  backgroundOptions?: BackgroundOptions; // New background options
 }
 
 // Main GraphVisualizer component
@@ -317,7 +361,8 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
   graph,
   highlightedNodes = [],
   highlightedEdges = [],
-  onNodeHover
+  onNodeHover,
+  backgroundOptions
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -329,12 +374,14 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
 
   const highlightedNodesRef = useRef(highlightedNodes);
   const highlightedEdgesRef = useRef(highlightedEdges);
+  const backgroundOptionsRef = useRef(backgroundOptions);
 
   // At the start of your component or effect
   useEffect(() => {
     highlightedNodesRef.current = highlightedNodes;
     highlightedEdgesRef.current = highlightedEdges;
-  }, [highlightedNodes, highlightedEdges]);
+    backgroundOptionsRef.current = backgroundOptions;
+  }, [highlightedNodes, highlightedEdges, backgroundOptions]);
 
   // Main effect for graph rendering and visualization
   useEffect(() => {
@@ -350,21 +397,27 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const currentHighlightedNodes = highlightedNodesRef.current;
     const currentHighlightedEdges = highlightedEdgesRef.current;
 
-    // Build lookup maps for highlights - need to check both directions for edges
-    const highlightedNodesMap = new Map<string, string>();
-    currentHighlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
+    // Build lookup maps for highlights with enhanced styling options
+    const highlightedNodesMap = new Map<string, NodeHighlight>();
+    currentHighlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, {
+      ...hl,
+      useGradient: hl.useGradient !== false // Default to true if not specified
+    }));
     
-    const highlightedEdgesMap = new Map<string, string>();
+    const highlightedEdgesMap = new Map<string, EdgeHighlight>();
     currentHighlightedEdges.forEach(hl => {
       // Generate consistent edge ID for undirected edges
       const edgeId = [hl.sourceId, hl.targetId].sort().join('-');
-      highlightedEdgesMap.set(edgeId, hl.color);
+      highlightedEdgesMap.set(edgeId, hl);
     });
 
     // Theme-based colors
-    const bgGradientStart = isDarkMode ? 'hsl(220, 13%, 18%)' : 'hsl(220, 13%, 95%)';
-    const bgGradientEnd = isDarkMode ? 'hsl(220, 13%, 15%)' : 'hsl(220, 13%, 90%)';
-    const defaultNodeGradientStart = isDarkMode ? 'hsl(210, 100%, 50%)' : 'hsl(210, 100%, 50%)';
+    const bgGradientStart = backgroundOptionsRef.current?.gradientStart || 
+      (isDarkMode ? 'hsl(0, 0.00%, 11.80%)' : 'hsl(220, 13%, 95%)');
+    const bgGradientEnd = backgroundOptionsRef.current?.gradientEnd || 
+      (isDarkMode ? 'hsl(240, 87.00%, 30.20%)' : 'hsl(220, 13%, 90%)');
+    const useBackgroundGradient = backgroundOptionsRef.current?.useGradient !== false; // Default to true
+    const defaultNodeGradientStart = isDarkMode ? 'hsl(0, 98.00%, 38.60%)' : 'hsl(210, 100%, 50%)';
     const defaultNodeGradientEnd = isDarkMode ? 'hsl(210, 100%, 40%)' : 'hsl(210, 100%, 40%)';
     const defaultLinkColor = isDarkMode ? 'hsl(0, 0%, 60%)' : 'hsl(0, 0%, 70%)';
     const textColor = 'white';
@@ -373,7 +426,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     svg.append("rect")
       .attr("width", width)
       .attr("height", height)
-      .attr("fill", "url(#gradient-bg)")
+      .attr("fill", useBackgroundGradient ? "url(#gradient-bg)" : bgGradientStart)
       .attr("rx", 12)
       .attr("ry", 12);
       
@@ -391,12 +444,12 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     bgGradient.append("stop")
       .attr("offset", "0%")
       .attr("stop-color", bgGradientStart)
-      .attr("stop-opacity", 0.6);
+      .attr("stop-opacity", 0.8);
       
     bgGradient.append("stop")
       .attr("offset", "100%")
       .attr("stop-color", bgGradientEnd)
-      .attr("stop-opacity", 0.4);
+      .attr("stop-opacity", 0.6);
       
     // Default node gradient
     const nodeGradient = defs.append("linearGradient")
@@ -416,8 +469,11 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       
     // Create custom gradients for highlighted nodes
     highlightedNodes.forEach(hl => {
+      // Use fillColor if provided, otherwise use the main color for both stroke and fill
+      const primaryColor = hl.fillColor || hl.color;
+      
       // Create a lighter version of the highlight color for gradient
-      const lighterColor = d3.color(hl.color)?.brighter(0.3)?.toString() || hl.color;
+      const lighterColor = d3.color(primaryColor)?.brighter(0.3)?.toString() || primaryColor;
       
       const highlightGradient = defs.append("linearGradient")
         .attr("id", `gradient-node-${hl.nodeId}`)
@@ -432,7 +488,32 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
         
       highlightGradient.append("stop")
         .attr("offset", "100%")
-        .attr("stop-color", hl.color);
+        .attr("stop-color", primaryColor);
+    });
+    
+    // Create custom gradients for non-highlighted nodes with custom colors
+    nodes.forEach(node => {
+      // Create a gradient for every node with custom colors that doesn't already have one
+      // This ensures all nodes have their own gradient definitions
+      if (node.fillColor && !highlightedNodesMap.has(node.id)) {
+        const primaryColor = node.fillColor;
+        const lighterColor = d3.color(primaryColor)?.brighter(0.3)?.toString() || primaryColor;
+        
+        const nodeCustomGradient = defs.append("linearGradient")
+          .attr("id", `gradient-node-${node.id}`)
+          .attr("x1", "0%")
+          .attr("y1", "0%")
+          .attr("x2", "0%")
+          .attr("y2", "100%");
+          
+        nodeCustomGradient.append("stop")
+          .attr("offset", "0%")
+          .attr("stop-color", lighterColor);
+          
+        nodeCustomGradient.append("stop")
+          .attr("offset", "100%")
+          .attr("stop-color", primaryColor);
+      }
     });
     
     // Create D3 selections with improved styling
@@ -444,12 +525,18 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .join("line")
       .attr("stroke", d => {
         // Use the edge ID which is now consistent regardless of direction
-        const highlightColor = highlightedEdgesMap.get(d.id);
-        return highlightColor || defaultLinkColor;
+        const highlight = highlightedEdgesMap.get(d.id);
+        return highlight ? highlight.color : defaultLinkColor;
       })
       .attr("stroke-opacity", d => highlightedEdgesMap.has(d.id) ? 0.8 : 0.5)
       .attr("stroke-width", d => {
-        // Use edge.data as weight
+        // First check if there's a custom width from highlighting
+        const highlight = highlightedEdgesMap.get(d.id);
+        if (highlight && highlight.width) {
+          return highlight.width;
+        }
+        
+        // Otherwise use edge.data as weight
         const weight = typeof d.data === 'number' ? d.data : 1;
         const baseWidth = highlightedEdgesMap.has(d.id) ? 2.5 : 1.5;
         return baseWidth * Math.sqrt(weight) / 2;
@@ -504,15 +591,37 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
       .data(nodes)
       .join<SVGCircleElement>("circle")
       .attr("r", nodeRadius)
-      .attr("fill", d => 
-        highlightedNodesMap.has(d.id)
-          ? `url(#gradient-node-${d.id})`
-          : "url(#gradient-node)"
-      )
+      .attr("fill", d => {
+        // First check if this is a highlighted node
+        if (highlightedNodesMap.has(d.id)) {
+          const highlight = highlightedNodesMap.get(d.id)!;
+          // Only use gradient if useGradient is true or not specified
+          return highlight.useGradient !== false ? 
+            `url(#gradient-node-${d.id})` : 
+            highlight.fillColor || highlight.color;
+        }
+        // Then check if the node has custom colors from creation
+        else if (d.fillColor && d.useGradient !== false) {
+          return `url(#gradient-node-${d.id})`;
+        }
+        else if (d.fillColor) {
+          // Use solid fill color if gradient is disabled
+          return d.fillColor;
+        }
+        // Default gradient
+        return "url(#gradient-node)";
+      })
       .attr("filter", d => highlightedNodesMap.has(d.id) ? "url(#glow)" : "url(#shadow)")
-      .attr("stroke", d => 
-        highlightedNodesMap.has(d.id) ? highlightedNodesMap.get(d.id)! : "white"
-      )
+      .attr("stroke", d => {
+        if (highlightedNodesMap.has(d.id)) {
+          return highlightedNodesMap.get(d.id)!.color;
+        }
+        // Use custom stroke color if defined in the node
+        else if (d.color) {
+          return d.color;
+        }
+        return "white";
+      })
       .attr("stroke-width", d => highlightedNodesMap.has(d.id) ? 2 : 1.5)
       .attr("stroke-opacity", 0.8)
       // Add hover event handlers
@@ -572,8 +681,10 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     .attr("fill", isDarkMode ? "rgba(30, 41, 59, 0.6)" : "rgba(255, 255, 255, 0.7)")
     .attr("rx", 3)
     .attr("ry", 3)
-    .attr("stroke", d => highlightedEdgesMap.has(d.id) ? 
-      highlightedEdgesMap.get(d.id)! : "transparent")
+    .attr("stroke", d => {
+      const highlight = highlightedEdgesMap.get(d.id);
+      return highlight ? highlight.color : "transparent";
+    })
     .attr("stroke-width", 1)
     .attr("width", d => {
       const weight = typeof d.data === 'number' ? d.data.toString() : "1";
@@ -634,7 +745,7 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
           if (node.y! > height - padding) node.y = height - padding;
         }
       });
-    
+
     // Add interactivity with drag functions
     function dragstarted(event: d3.D3DragEvent<SVGCircleElement, Node, Node>, d: Node) {
       if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -718,7 +829,9 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, dimensions, isDarkMode, onNodeHover]); // Add onNodeHover to dependency array
   
-  // Separate effect: update highlights only
+  /**
+   * Effect to handle highlights
+   */
   useEffect(() => {
     if (!svgRef.current) return;
     const svg = d3.select(svgRef.current);
@@ -727,60 +840,115 @@ export const GraphVisualizer: FC<GraphVisualizerProps> = ({
     const localHighlightedNodes = highlightedNodesRef.current;
     const localHighlightedEdges = highlightedEdgesRef.current;
 
-    // Recreate lookup maps for highlights
-    const highlightedNodesMap = new Map<string, string>();
-    localHighlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, hl.color));
+    // Recreate lookup maps for highlights with enhanced styling
+    const highlightedNodesMap = new Map<string, NodeHighlight>();
+    localHighlightedNodes.forEach(hl => highlightedNodesMap.set(hl.nodeId, {
+      ...hl,
+      useGradient: hl.useGradient !== false // Default to true if not specified
+    }));
     
-    const highlightedEdgesMap = new Map<string, string>();
+    const highlightedEdgesMap = new Map<string, EdgeHighlight>();
     localHighlightedEdges.forEach(hl => {
       // Generate consistent edge ID for undirected edges
       const edgeId = [hl.sourceId, hl.targetId].sort().join('-');
-      highlightedEdgesMap.set(edgeId, hl.color);
+      highlightedEdgesMap.set(edgeId, hl);
     });
-
-    // Update node selection individually without removing them
+    
+    // We need to recreate the gradients for any highlighted nodes
+    const defs = svg.select("defs");
+    if (!defs.empty()) {
+      // First remove any existing highlight gradients
+      defs.selectAll("[id^='gradient-node-']").remove();
+      
+      // Then recreate them for the current highlighted nodes
+      localHighlightedNodes.forEach(hl => {
+        // Only create gradient if useGradient isn't explicitly false
+        if (hl.useGradient !== false) {
+          // Use fillColor if provided, otherwise use the main color for both stroke and fill
+          const primaryColor = hl.fillColor || hl.color;
+          
+          // Create a lighter version of the highlight color for gradient
+          const lighterColor = d3.color(primaryColor)?.brighter(0.3)?.toString() || primaryColor;
+          
+          const highlightGradient = defs.append("linearGradient")
+            .attr("id", `gradient-node-${hl.nodeId}`)
+            .attr("x1", "0%")
+            .attr("y1", "0%")
+            .attr("x2", "0%")
+            .attr("y2", "100%");
+            
+          highlightGradient.append("stop")
+            .attr("offset", "0%")
+            .attr("stop-color", lighterColor);
+            
+          highlightGradient.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", primaryColor);
+        }
+      });
+    }
+     
+    // Update nodes with proper gradient or solid color
     svg.selectAll<SVGCircleElement, Node>("circle")
-      .transition().duration(300)
-      .attr("fill", (d: Node) => 
-        highlightedNodesMap.has(d.id) ? `url(#gradient-node-${d.id})` : "url(#gradient-node)"
-      )
-      .attr("filter", (d: Node) => highlightedNodesMap.has(d.id) ? "url(#glow)" : "url(#shadow)")
-      .attr("stroke", (d: Node) => 
-        highlightedNodesMap.has(d.id) ? highlightedNodesMap.get(d.id)! : "white"
-      )
-      .attr("stroke-width", (d: Node) => highlightedNodesMap.has(d.id) ? 2 : 1.5)
-      // Fix: Explicitly set opacity to ensure nodes don't become transparent
-      .attr("opacity", 1)
-      // Fix: Add pointer-events to ensure nodes remain interactive
-      .attr("pointer-events", "all");
-
-    // Update links similarly with proper type cast
+      .each(function(d: Node) {
+        const node = d3.select(this);
+        const isHighlighted = highlightedNodesMap.has(d.id);
+        
+        // Figure out what fill to use
+        let fillValue: string;
+        if (isHighlighted) {
+          const highlight = highlightedNodesMap.get(d.id)!;
+          if (highlight.useGradient !== false) {
+            fillValue = `url(#gradient-node-${d.id})`;
+          } else {
+            fillValue = highlight.fillColor || highlight.color;
+          }
+        } else {
+          fillValue = "url(#gradient-node)"; // default gradient
+        }
+        
+        // Apply all attributes in a single transition per node
+        node.transition().duration(300)
+          .attr("fill", fillValue)
+          .attr("filter", isHighlighted ? "url(#glow)" : "url(#shadow)")
+          .attr("stroke", isHighlighted ? highlightedNodesMap.get(d.id)!.color : "white")
+          .attr("stroke-width", isHighlighted ? 2 : 1.5)
+          .attr("opacity", 1)
+          .attr("pointer-events", "all");
+      });
+  
+    // Update links
     svg.selectAll<SVGLineElement, Edge>("line")
       .transition().duration(300)
       .attr("stroke", (d: Edge) => {
-        const highlightColor = d.id ? highlightedEdgesMap.get(d.id) : undefined;
-        return highlightColor ? highlightColor : (isDarkMode ? 'hsl(220, 13%, 45%)' : 'hsl(220, 13%, 75%)');
+        const highlight = d.id ? highlightedEdgesMap.get(d.id) : undefined;
+        return highlight ? highlight.color : (isDarkMode ? 'hsl(220, 13%, 45%)' : 'hsl(220, 13%, 75%)');
       })
       .attr("stroke-width", (d: Edge) => {
+        const highlight = d.id ? highlightedEdgesMap.get(d.id) : undefined;
+        if (highlight && highlight.width) {
+          return highlight.width;
+        }
+        
         const weight = typeof d.data === 'number' ? d.data : 1;
         const baseWidth = d.id && highlightedEdgesMap.has(d.id) ? 2.5 : 1.5;
         return baseWidth * Math.sqrt(weight) / 2;
       })
       .attr("stroke-opacity", (d: Edge) => d.id && highlightedEdgesMap.has(d.id) ? 0.8 : 0.5);
 
-    // Update the edge labels to show more clearly when highlighted
-    svg.selectAll<SVGRectElement, Edge>("rect").transition().duration(300)
+    // Update the edge labels
+    svg.selectAll<SVGRectElement, Edge>("rect")
+      .transition().duration(300)
       .attr("opacity", (d: Edge) => {
         if (d && d.id && highlightedEdgesMap.has(d.id)) return 0.9;
         return 0.6;
       })
       .attr("stroke", (d: Edge) => {
-        if (d && d.id && highlightedEdgesMap.has(d.id)) 
-          return highlightedEdgesMap.get(d.id)!;
-        return "transparent";
+        const highlight = d && d.id ? highlightedEdgesMap.get(d.id) : undefined;
+        return highlight ? highlight.color : "transparent";
       });
 
-    // Filter for valid elements before applying the transition
+    // Update edge label text
     svg.selectAll<SVGTextElement, Edge>("text")
       .filter((d: Edge) => d && d.id !== undefined)
       .transition().duration(300)
