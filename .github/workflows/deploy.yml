@@ -55,7 +55,6 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           source: "myapp.tar"
           target: "~/"
-          debug: true
 
       - name: Deploy on Linux server
         uses: appleboy/ssh-action@v0.1.5
