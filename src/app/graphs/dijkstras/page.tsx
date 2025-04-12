@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FC, useRef, useEffect } from "react";
+import React, { useState, FC, useRef, useEffect, useCallback } from "react";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
@@ -72,47 +72,8 @@ const DijkstrasPage: FC = () => {
   });
 
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  /**
-   * Effect to initialize the graph when the component mounts or when graphSize or graphDensity changes.
-   */
-  useEffect(() => {
-    handleResetGraph();
-  }, [graphSize, graphDensity, useGradient]);
 
-  // Effect to handle  dark mode
-  useEffect(() => {
-    const isDark = typeof window !== 'undefined' && 
-                  window.matchMedia && 
-                  window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Update background colors based on dark mode
-    setBackgroundOptions({
-      gradientStart: isDark ? COLORS.BACKGROUND.darkGradientStart : COLORS.BACKGROUND.gradientStart,
-      gradientEnd: isDark ? COLORS.BACKGROUND.darkGradientEnd : COLORS.BACKGROUND.gradientEnd,
-      useGradient: true
-    });
-  }, []);
-
-  const handleRunDijkstra = () => {
-    if (!startNodeId || !graph) {
-      debugLog(debug, "Missing start node or no graph");
-      return;
-    }
-
-    try {
-      const result = dijkstra(graph, startNodeId, debug);
-      debugLog(debug, "Dijkstra algorithm completed. Steps:", result.steps.length);
-      setAlgorithmResult(result);
-      setCurrentStepIndex(0);
-      setIsRunning(true);
-      updateVisualization(result.steps[0], result);
-    } catch (error) {
-      debugLog(debug, "Error running Dijkstra's algorithm:", error);
-    }
-  };
-
-  const handleResetGraph = () => {
+  const handleResetGraph = useCallback(() => {
     if (autoPlayIntervalRef.current) {
       clearInterval(autoPlayIntervalRef.current);
       autoPlayIntervalRef.current = null;
@@ -164,6 +125,45 @@ const DijkstrasPage: FC = () => {
       
       setHighlightedNodes(newHighlightedNodes);
       setHighlightedEdges([]);
+    }
+  }, [graphSize, graphDensity, useGradient, setGraph, setStartNodeId, setHighlightedNodes, setHighlightedEdges, setIsAutoPlaying, setIsRunning, setCurrentStepIndex, setAlgorithmResult]); // Added dependencies for useCallback
+  
+  /**
+   * Effect to initialize the graph when the component mounts or when graphSize or graphDensity changes.
+   */
+  useEffect(() => {
+    handleResetGraph();
+  }, [handleResetGraph]); // Now only depends on the memoized handleResetGraph
+
+  // Effect to handle  dark mode
+  useEffect(() => {
+    const isDark = typeof window !== 'undefined' && 
+                  window.matchMedia && 
+                  window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Update background colors based on dark mode
+    setBackgroundOptions({
+      gradientStart: isDark ? COLORS.BACKGROUND.darkGradientStart : COLORS.BACKGROUND.gradientStart,
+      gradientEnd: isDark ? COLORS.BACKGROUND.darkGradientEnd : COLORS.BACKGROUND.gradientEnd,
+      useGradient: true
+    });
+  }, []);
+
+  const handleRunDijkstra = () => {
+    if (!startNodeId || !graph) {
+      debugLog(debug, "Missing start node or no graph");
+      return;
+    }
+
+    try {
+      const result = dijkstra(graph, startNodeId, debug);
+      debugLog(debug, "Dijkstra algorithm completed. Steps:", result.steps.length);
+      setAlgorithmResult(result);
+      setCurrentStepIndex(0);
+      setIsRunning(true);
+      updateVisualization(result.steps[0], result);
+    } catch (error) {
+      debugLog(debug, "Error running Dijkstra's algorithm:", error);
     }
   };
 

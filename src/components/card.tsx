@@ -4,14 +4,6 @@ import Link from "next/link"
 import Image from "next/image"
 import React from "react";
 
-// Import preview components
-import DPPreview from "./card-animations/dp-preview";
-import HeapPreview from "./card-animations/heap-preview";
-import ArrayPreview from "./card-animations/array-preview";
-import GraphPreview from "./card-animations/graph-preview";
-import LinkedListPreview from "./card-animations/linkedlist-preview";
-import TreePreview from "./card-animations/tree-preview";
-
 // ==============================================
 // TYPES AND UTILITIES
 // ==============================================
@@ -139,4 +131,4 @@ const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status =
 // EXPORTS
 // ==============================================
 
-export { CardStyle1, CardStyle2, GraphPreview };
+export { CardStyle1, CardStyle2 };
