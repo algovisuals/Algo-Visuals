@@ -137,7 +137,7 @@ const CardStyle1 = ({ card_name, card_text, card_image, href, status}: CardProps
 /**
  * Card Style 2 - Gradient card with animation effects
  */
-const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status = "wip"}: CardProps) => (
+const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status = "wip", preview}: CardProps & { preview?: React.ReactNode }) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -159,15 +159,22 @@ const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status =
           whileHover={{ scale: status === "wip" ? 1 : 1.02 }}
           className="rounded-lg overflow-hidden shadow-md bg-gray-800/60"
         >
-          <div className="relative w-full aspect-[16/9]">
-              <Image 
-                width={500}
-                height={300}
-                src={card_image || imageLoader({ width: 1000, height: 600 })}
-                alt="Algorithm visualization preview"
-                className={`object-cover w-full h-full rounded-lg ${status === "working" ? "opacity-80 hover:opacity-100" : "opacity-50"} transition-opacity duration-300`}
-              />
-          </div>
+          {/* Conditionally render the preview or the image */}
+          {preview ? (
+            <div className="relative w-full aspect-[16/9] flex items-center justify-center">
+              {preview}
+            </div>
+          ) : (
+            <div className="relative w-full aspect-[16/9]">
+                <Image 
+                  width={500}
+                  height={300}
+                  src={card_image || imageLoader({ width: 1000, height: 600 })}
+                  alt="Algorithm visualization preview"
+                  className={`object-cover w-full h-full rounded-lg ${status === "working" ? "opacity-80 hover:opacity-100" : "opacity-50"} transition-opacity duration-300`}
+                />
+            </div>
+          )}
         </motion.div>
       </div>
     </Link>
