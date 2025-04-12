@@ -4,14 +4,6 @@ import Link from "next/link"
 import Image from "next/image"
 import React from "react";
 
-// Import preview components
-import DPPreview from "./card-animations/dp-preview";
-import HeapPreview from "./card-animations/heap-preview";
-import ArrayPreview from "./card-animations/array-preview";
-import GraphPreview from "./card-animations/graph-preview";
-import LinkedListPreview from "./card-animations/linkedlist-preview";
-import TreePreview from "./card-animations/tree-preview";
-
 // ==============================================
 // TYPES AND UTILITIES
 // ==============================================
@@ -20,9 +12,10 @@ type CardProps = {
   card_name: string;
   card_text: string;
   href: string;
-  card_image?: string;
+  card_image?: string; // Keep for potential fallback or other card types
   index?: number;
   status?: "working" | "wip" | "partial";
+  preview?: React.ReactNode; // Add preview prop
 };
 
 const imageLoader = ({ width, height }: { width: number; height: number }): string => {
@@ -32,67 +25,6 @@ const imageLoader = ({ width, height }: { width: number; height: number }): stri
 // ==============================================
 // HELPER FUNCTIONS
 // ==============================================
-
-/**
- * Renders the appropriate preview component based on card type
- */
-const renderCardPreview = (card_name: string, href: string, card_image?: string, status?: CardProps["status"]) => {
-  // Check which visualization to use
-  const isGraphCard = card_name.toLowerCase() === "graphs" || href.includes("graphs");
-  const isArrayCard = card_name.toLowerCase() === "arrays" || href.includes("arrays");
-  const isTreeCard = card_name.toLowerCase() === "trees" || href.includes("trees");
-  const isLinkedListCard = card_name.toLowerCase() === "linked lists" || href.includes("linked-lists");
-  const isHeapCard = card_name.toLowerCase() === "heaps" || href.includes("heaps");
-  const isDPCard = card_name.toLowerCase() === "dynamic programming" || href.includes("dynamic-programming");
-  
-  if (isGraphCard) {
-    return (
-      <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
-        <GraphPreview />
-      </div>
-    );
-  } else if (isArrayCard) {
-    return (
-      <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
-        <ArrayPreview />
-      </div>
-    );
-  } else if (isTreeCard) {
-    return (
-      <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
-        <TreePreview />
-      </div>
-    );
-  } else if (isLinkedListCard) {
-    return (
-      <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
-        <LinkedListPreview />
-      </div>
-    );
-  } else if (isHeapCard) {
-    return (
-      <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
-        <HeapPreview />
-      </div>
-    );
-  } else if (isDPCard) {
-    return (
-      <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
-        <DPPreview />
-      </div>
-    );
-  } else {
-    return (
-      <Image
-        width={600} 
-        height={500}  
-        src={card_image || imageLoader({ width: 1200, height: 1000})} 
-        alt="Placeholder image" 
-        className={status === "wip" ? "opacity-70" : ""}
-      />
-    );
-  }
-};
 
 /**
  * Renders a status badge for cards
@@ -113,17 +45,31 @@ const StatusBadge = ({ status }: { status?: CardProps["status"] }) => {
 // ==============================================
 
 /**
- * Card Style 1 - Basic card with image preview
+ * Card Style 1 - Basic card with image preview (now uses preview prop)
  */
-const CardStyle1 = ({ card_name, card_text, card_image, href, status}: CardProps) => {
+const CardStyle1 = ({ card_name, card_text, card_image, href, status, preview }: CardProps) => {
   return (
     <div className="relative">
       <StatusBadge status={status} />
       
       <Link href={href}>
-        <div className="w-full">
-          {renderCardPreview(card_name, href, card_image, status)}
-        </div>
+        {/* Render the preview component if provided */}
+        {preview ? (
+          <div className="bg-gray-800 h-[250px] flex items-center justify-center cursor-pointer">
+            {preview}
+          </div>
+        ) : (
+          // Fallback to image if no preview is provided
+          <div className="w-full h-[250px] flex items-center justify-center bg-gray-700"> 
+            <Image
+              width={600} 
+              height={500}  
+              src={card_image || imageLoader({ width: 1200, height: 1000})} 
+              alt="Placeholder image" 
+              className={`object-cover w-full h-full ${status === "wip" ? "opacity-70" : ""}`}
+            />
+          </div>
+        )}
         
         <div className="px-6 py-4">
           <div className="font-bold text-xl mb-2">{card_name}</div>
@@ -137,7 +83,7 @@ const CardStyle1 = ({ card_name, card_text, card_image, href, status}: CardProps
 /**
  * Card Style 2 - Gradient card with animation effects
  */
-const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status = "wip"}: CardProps) => (
+const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status = "wip", preview}: CardProps & { preview?: React.ReactNode }) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -159,15 +105,22 @@ const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status =
           whileHover={{ scale: status === "wip" ? 1 : 1.02 }}
           className="rounded-lg overflow-hidden shadow-md bg-gray-800/60"
         >
-          <div className="relative w-full aspect-[16/9]">
-              <Image 
-                width={500}
-                height={300}
-                src={card_image || imageLoader({ width: 1000, height: 600 })}
-                alt="Algorithm visualization preview"
-                className={`object-cover w-full h-full rounded-lg ${status === "working" ? "opacity-80 hover:opacity-100" : "opacity-50"} transition-opacity duration-300`}
-              />
-          </div>
+          {/* Conditionally render the preview or the image */}
+          {preview ? (
+            <div className="relative w-full aspect-[16/9] flex items-center justify-center">
+              {preview}
+            </div>
+          ) : (
+            <div className="relative w-full aspect-[16/9]">
+                <Image 
+                  width={500}
+                  height={300}
+                  src={card_image || imageLoader({ width: 1000, height: 600 })}
+                  alt="Algorithm visualization preview"
+                  className={`object-cover w-full h-full rounded-lg ${status === "working" ? "opacity-80 hover:opacity-100" : "opacity-50"} transition-opacity duration-300`}
+                />
+            </div>
+          )}
         </motion.div>
       </div>
     </Link>
@@ -178,4 +131,4 @@ const CardStyle2 = ({href, card_image, card_name, card_text, index = 0, status =
 // EXPORTS
 // ==============================================
 
-export { CardStyle1, CardStyle2, GraphPreview };
+export { CardStyle1, CardStyle2 };

@@ -4,18 +4,21 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { CardStyle2 } from "@/components/card";
 import { motion } from "framer-motion";
+import DijkstrasPreview from "@/components/card-animations/graphs/dijkstras-preview"; // Import the preview component
 
 const cardInfo: {
     href: string;
     card_name: string;
     card_text: string;
     status: "working" | "wip" | "partial";
+    preview?: React.ReactNode; // Add optional preview property
 }[] = [
       {
         href: "/graphs/dijkstras",
         card_name: "Dijkstra's Algorithm",
         card_text: "Dijkstra's algorithm finds the shortest path between nodes in a graph with non-negative edge weights. It uses a priority queue to greedily select the closest unvisited vertex.",
-        status: "working"
+        status: "working",
+        preview: <DijkstrasPreview /> // Add the preview component here
     },
     {
         href: "/graphs/breadth-first-search",

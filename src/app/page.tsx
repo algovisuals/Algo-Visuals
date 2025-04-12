@@ -4,6 +4,15 @@ import Footer from "../components/footer";
 import { CardStyle1 } from "@/components/card";
 import { motion } from "framer-motion";
 
+// Import preview components needed for CardStyle1
+import ArrayPreview from "@/components/card-animations/array-preview";
+import LinkedListPreview from "@/components/card-animations/linkedlist-preview";
+import TreePreview from "@/components/card-animations/tree-preview";
+import GraphPreview from "@/components/card-animations/graph-preview";
+import HeapPreview from "@/components/card-animations/heap-preview";
+import DPPreview from "@/components/card-animations/dp-preview";
+
+
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
@@ -134,6 +143,7 @@ export default function Home() {
                   card_text="Visualize array operations and sorting algorithms." 
                   href="/arrays" 
                   status="partial"
+                  preview={<ArrayPreview />} // Pass preview component
                 />
               </CardWrapper>
               
@@ -143,6 +153,7 @@ export default function Home() {
                   card_text="Explore operations on singly and doubly linked lists." 
                   href="/linked-lists" 
                   status="wip"
+                  preview={<LinkedListPreview />} // Pass preview component
                 />
               </CardWrapper>
               
@@ -152,6 +163,7 @@ export default function Home() {
                   card_text="Understand tree traversals and binary search trees." 
                   href="/trees" 
                   status="wip"
+                  preview={<TreePreview />} // Pass preview component
                 />
               </CardWrapper>
               
@@ -161,6 +173,7 @@ export default function Home() {
                   card_text="Visualize graph algorithms like BFS, DFS, and Dijkstra's." 
                   href="/graphs" 
                   status="partial"
+                  preview={<GraphPreview />} // Pass preview component
                 />
               </CardWrapper>
               
@@ -170,6 +183,7 @@ export default function Home() {
                   card_text="Learn about heap operations and heapsort algorithm." 
                   href="/heaps" 
                   status="wip"
+                  preview={<HeapPreview />} // Pass preview component
                 />
               </CardWrapper>
               
@@ -179,6 +193,7 @@ export default function Home() {
                   card_text="Master DP through interactive visualizations." 
                   href="/dynamic-programming" 
                   status="wip"
+                  preview={<DPPreview />} // Pass preview component
                 />
               </CardWrapper>
             </div>
