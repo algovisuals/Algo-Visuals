@@ -1,25 +1,25 @@
-import { generateRandomArray } from '@/algorithms-core/arrays_common';
-import '@testing-library/jest-dom';
+import { generateRandomArray } from "@/algorithms-core/arrays_common";
+import "@testing-library/jest-dom";
 
-describe('generateRandomArray', () => {
-  test('returns an array of the specified length', () => {
+describe("generateRandomArray", () => {
+  test("returns an array of the specified length", () => {
     const length = 10;
     const result = generateRandomArray(length, 1, 100);
     expect(result).toHaveLength(length);
   });
 
-  test('all elements are within the specified range', () => {
+  test("all elements are within the specified range", () => {
     const min = 5;
     const max = 20;
     const result = generateRandomArray(50, min, max);
-    
-    result.forEach(num => {
+
+    result.forEach((num) => {
       expect(num).toBeGreaterThanOrEqual(min);
       expect(num).toBeLessThanOrEqual(max);
     });
   });
 
-  test('returns different arrays on multiple calls', () => {
+  test("returns different arrays on multiple calls", () => {
     // Don't mock Math.random, use the actual implementation
     const array1 = generateRandomArray(1000, 1, 100);
     const array2 = generateRandomArray(1000, 1, 100);
@@ -37,10 +37,10 @@ describe('generateRandomArray', () => {
     expect(hasDifference).toBe(true);
   });
 
-  test('generates integer values', () => {
+  test("generates integer values", () => {
     const result = generateRandomArray(20, 1, 100);
-    
-    result.forEach(num => {
+
+    result.forEach((num) => {
       expect(Number.isInteger(num)).toBe(true);
     });
   });

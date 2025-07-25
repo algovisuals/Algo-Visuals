@@ -14,24 +14,31 @@ interface SidebarProps {
  * @param opt2Action: N/A not implemented
  * @param opt3Action: N/A not implemented
  * @param isAutoStepping: boolean to determine if the algorithm is auto stepping
- * @returns 
+ * @returns
  */
-export default function Sidebar({ opt1Action, opt2Action, opt3Action, isAutoStepping }: SidebarProps) {
+export default function Sidebar({
+  opt1Action,
+  opt2Action,
+  opt3Action,
+  isAutoStepping,
+}: SidebarProps) {
   const [open, setOpen] = useState(false);
-  
+
   return (
     <>
       {/* Sidebar Panel */}
-      <div className={`fixed top-0 right-0 h-full w-64 bg-gray-800 text-white shadow-lg transition-transform duration-300 transform ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}>
+      <div
+        className={`fixed top-0 right-0 h-full w-64 bg-gray-800 text-white shadow-lg transition-transform duration-300 transform ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
         <div className="p-4">
           <h2 className="text-xl font-semibold mb-4">Algorithm Controls</h2>
           <button
             onClick={opt1Action}
             className={`w-full p-2 rounded-md text-left ${
-              isAutoStepping 
-                ? "bg-green-600 hover:bg-green-700" 
+              isAutoStepping
+                ? "bg-green-600 hover:bg-green-700"
                 : "bg-gray-700 hover:bg-gray-600"
             }`}
           >
@@ -73,7 +80,11 @@ export default function Sidebar({ opt1Action, opt2Action, opt3Action, isAutoStep
             strokeWidth="2"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
         ) : (
           // Bars Icon: click to open the sidebar.
@@ -84,7 +95,11 @@ export default function Sidebar({ opt1Action, opt2Action, opt3Action, isAutoStep
             strokeWidth="2"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         )}
       </button>

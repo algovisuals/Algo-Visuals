@@ -8,7 +8,7 @@ const LinkedListPreview = () => {
   const [hoverState, setHoverState] = useState(false);
   const prevHoverState = useRef(false);
   const initialViewRef = useRef(false);
-  
+
   const nodeControls = useAnimation();
   const arrowControls = useAnimation();
   const labelControls = useAnimation();
@@ -19,32 +19,32 @@ const LinkedListPreview = () => {
     nodeControls.set({ scale: 0 });
     arrowControls.set({ pathLength: 0 });
     labelControls.set({ opacity: 0 });
-    
+
     // Start animations with improved settings
-    nodeControls.start(i => ({
+    nodeControls.start((i) => ({
       scale: 1,
-      transition: { 
-        delay: 0.3 + (i * 0.1), 
+      transition: {
+        delay: 0.3 + i * 0.1,
         duration: 0.6,
-        ease: "easeInOut" 
-      }
+        ease: "easeInOut",
+      },
     }));
-    
-    arrowControls.start(i => ({
+
+    arrowControls.start((i) => ({
       pathLength: 1,
-      transition: { 
-        delay: 0.3 + (i * 0.1), 
+      transition: {
+        delay: 0.3 + i * 0.1,
         duration: 0.6,
-        ease: "easeInOut"
-      }
+        ease: "easeInOut",
+      },
     }));
-    
-    labelControls.start(i => ({
+
+    labelControls.start((i) => ({
       opacity: 1,
-      transition: { delay: 0.3 + (i * 0.15), duration: 0.3 }
+      transition: { delay: 0.3 + i * 0.15, duration: 0.3 },
     }));
   }, [nodeControls, arrowControls, labelControls]);
-  
+
   // Handle initial view animation
   useEffect(() => {
     if (isInView && !initialViewRef.current) {
@@ -52,7 +52,7 @@ const LinkedListPreview = () => {
       startAnimation();
     }
   }, [isInView, startAnimation]);
-  
+
   // Handle hover state changes
   useEffect(() => {
     if (hoverState && !prevHoverState.current) {
@@ -60,33 +60,32 @@ const LinkedListPreview = () => {
     }
     prevHoverState.current = hoverState;
   }, [hoverState, startAnimation]);
-  
-  
+
   // Positions for linked list nodes (horizontal alignment)
   const nodePositions = [
     { x: 50, y: 75 },
     { x: 125, y: 75 },
     { x: 200, y: 75 },
-    { x: 275, y: 75 }
+    { x: 275, y: 75 },
   ];
 
   return (
-    <motion.svg 
+    <motion.svg
       ref={ref}
-      width="100%" 
-      height="100%" 
-      viewBox="0 0 300 150" 
+      width="100%"
+      height="100%"
+      viewBox="0 0 300 150"
       className="w-full h-full"
       onMouseEnter={() => setHoverState(true)}
       onMouseLeave={() => setHoverState(false)}
     >
       {/* Nodes */}
       {nodePositions.map((node, i) => (
-        <motion.rect 
+        <motion.rect
           key={`node-${i}`}
-          x={node.x - 20} 
-          y={node.y - 20} 
-          width={40} 
+          x={node.x - 20}
+          y={node.y - 20}
+          width={40}
           height={40}
           rx={5}
           fill="#374151"
@@ -97,16 +96,16 @@ const LinkedListPreview = () => {
           animate={nodeControls}
         />
       ))}
-      
+
       {/* Arrows between nodes */}
       {nodePositions.slice(0, -1).map((node, i) => {
         const nextNode = nodePositions[i + 1];
         return (
           <motion.line
             key={`arrow-${i}`}
-            x1={node.x + 25} 
+            x1={node.x + 25}
             y1={node.y}
-            x2={nextNode.x - 25} 
+            x2={nextNode.x - 25}
             y2={nextNode.y}
             stroke="#9CA3AF"
             strokeWidth={2}
@@ -116,7 +115,7 @@ const LinkedListPreview = () => {
           />
         );
       })}
-      
+
       {/* Arrow heads */}
       {nodePositions.slice(0, -1).map((node, i) => {
         const nextNode = nodePositions[i + 1];
@@ -131,7 +130,7 @@ const LinkedListPreview = () => {
           />
         );
       })}
-      
+
       {/* Labels */}
       {nodePositions.map((node, i) => (
         <motion.text

@@ -2,16 +2,16 @@
 
 **https://algovisuals.com**
 
-*Website not working?* Check the status of my applications: https://up.solnas.net/status/nevryk
+_Website not working?_ Check the status of my applications: https://up.solnas.net/status/nevryk
 
 Algo-Visuals is an interactive web application that demonstrates how classic algorithms work through dynamic, animated visualizations. Built with a modern, widely adopted tech stack, the project is designed for performance, scalability, and an engaging user experience.
 
 ## Developers
 
-| Name            | Role               | GitHub                                         |
-| --------------- | ------------------ | ---------------------------------------------- |
-| **Nevryk**      | Main Developer     | [nsoliven](https://github.com/nsoliven)        |
-| **Kayleen**     | Contributor        | [kayuh7](https://github.com/kayuh7)            |
+| Name        | Role           | GitHub                                  |
+| ----------- | -------------- | --------------------------------------- |
+| **Nevryk**  | Main Developer | [nsoliven](https://github.com/nsoliven) |
+| **Kayleen** | Contributor    | [kayuh7](https://github.com/kayuh7)     |
 
 ---
 
@@ -46,30 +46,35 @@ Algo-Visuals brings algorithms to life by showing each step through interactive 
 ## Implemented Algorithms
 
 ### Arrays
+
 - **Quick Sort:** Visualize the divide-and-conquer strategy with pivot selection and partitioning
-- *Coming Soon:* Merge Sort, Bubble Sort, Binary Search, Selection Sort, and more
+- _Coming Soon:_ Merge Sort, Bubble Sort, Binary Search, Selection Sort, and more
 
 ### Graphs
-- **Dijkstra's Algorithm:** Visualize finding the shortest paths in a weighted graph
-- *Coming Soon:* BFS, DFS, and more graph algorithms
 
-*Additional algorithm categories (Trees, Linked Lists, Heaps, Dynamic Programming) are under development*
+- **Dijkstra's Algorithm:** Visualize finding the shortest paths in a weighted graph
+- _Coming Soon:_ BFS, DFS, and more graph algorithms
+
+_Additional algorithm categories (Trees, Linked Lists, Heaps, Dynamic Programming) are under development_
 
 ---
 
 ## Tech Stack
 
 ### Next.js & React
+
 - **Next.js:** A React framework that provides:
   - Server-Side Rendering (SSR) for improved initial load times and SEO
   - Static Site Generation (SSG) for rapid delivery of static content
 - **React:** Powers the UI with reusable components
 
 ### Styling & Animation
+
 - **Tailwind CSS:** A utility-first CSS framework for consistent styling
 - **Framer Motion:** For smooth, declarative animations
 
 ### Visualization
+
 - **D3.js:** A powerful library for data-driven visualizations
 - **TypeScript:** For type safety and enhanced developer experience
 

@@ -8,8 +8,12 @@ export function computeShortestPath(dpValues: number[][]) {
   const cols = dpValues[0].length;
 
   // Initialize distances and previous nodes for the shortest path
-  const distances = Array(rows).fill(0).map(() => Array(cols).fill(Infinity));
-  const previous = Array(rows).fill(0).map(() => Array(cols).fill(null));
+  const distances = Array(rows)
+    .fill(0)
+    .map(() => Array(cols).fill(Infinity));
+  const previous = Array(rows)
+    .fill(0)
+    .map(() => Array(cols).fill(null));
 
   // Set starting point distance to its value
   distances[0][0] = dpValues[0][0];

@@ -10,7 +10,10 @@ import ArrayBase from "@/components/array-base";
 const intervalMilliseconds = 500; // interval for auto-stepping
 
 // algorithms core
-import { generateRandomArray, ArrayVisualizer } from "@/algorithms-core/arrays_common";
+import {
+  generateRandomArray,
+  ArrayVisualizer,
+} from "@/algorithms-core/arrays_common";
 import { SortStep, getQuickSortSteps } from "@/algorithms-core/quicksort";
 
 const QuickSortPage: FC = () => {
@@ -46,9 +49,9 @@ const QuickSortPage: FC = () => {
 
   const handleToggleAutoStep = () => {
     // Toggle state
-    setIsAutoStepping(prevState => {
+    setIsAutoStepping((prevState) => {
       const newState = !prevState;
-      
+
       if (newState) {
         // Starting auto-stepping
         if (steps.length === 0) {
@@ -57,10 +60,10 @@ const QuickSortPage: FC = () => {
           setSteps(newSteps);
           setStepIndex(1);
           setCurrentStep(newSteps[0]);
-          
+
           // Set interval with the new steps we just created
           autoStepIntervalRef.current = setInterval(() => {
-            setStepIndex(prevIndex => {
+            setStepIndex((prevIndex) => {
               if (prevIndex < newSteps.length) {
                 setCurrentStep(newSteps[prevIndex]);
                 return prevIndex + 1;
@@ -79,10 +82,10 @@ const QuickSortPage: FC = () => {
           if (autoStepIntervalRef.current) {
             clearInterval(autoStepIntervalRef.current);
           }
-          
+
           // Set up new interval with existing steps
           autoStepIntervalRef.current = setInterval(() => {
-            setStepIndex(prevIndex => {
+            setStepIndex((prevIndex) => {
               if (prevIndex < steps.length) {
                 setCurrentStep(steps[prevIndex]);
                 return prevIndex + 1;
@@ -104,11 +107,10 @@ const QuickSortPage: FC = () => {
           autoStepIntervalRef.current = null;
         }
       }
-      
+
       return newState;
     });
   };
-
 
   //declaring constant variable numbers and assigning it to the array of numbers
 
@@ -117,18 +119,24 @@ const QuickSortPage: FC = () => {
       <Header />
       <main className="flex-grow w-full flex items-center justify-center px-4">
         <div className="w-full max-w-screen-2xl">
-          <h1 className="text-4xl font-bold text-center mb-8">Quicksort Visualizer</h1>
+          <h1 className="text-4xl font-bold text-center mb-8">
+            Quicksort Visualizer
+          </h1>
           <div className="flex flex-col md:flex-row gap-8 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
-            <Sidebar 
-              opt1Action={handleToggleAutoStep} 
-              opt2Action={handleStep} 
-              opt3Action={() => {}} 
+            <Sidebar
+              opt1Action={handleToggleAutoStep}
+              opt2Action={handleStep}
+              opt3Action={() => {}}
               isAutoStepping={isAutoStepping}
             />
             <div className="p-4 rounded-lg flex-1 flex flex-col items-center">
               <ArrayVisualizer step={currentStep} />
               <div className="flex justify-center items-center w-full mt-6">
-                <ArrayBase array={currentStep.arr} pivotIndex={currentStep.pivotIndex} comparing={currentStep.comparing}/>
+                <ArrayBase
+                  array={currentStep.arr}
+                  pivotIndex={currentStep.pivotIndex}
+                  comparing={currentStep.comparing}
+                />
               </div>
             </div>
           </div>

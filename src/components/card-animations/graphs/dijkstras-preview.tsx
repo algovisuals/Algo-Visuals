@@ -49,15 +49,17 @@ const DijkstrasDiagram = () => {
 
   // Detect dark mode
   useEffect(() => {
-    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeMediaQuery = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    );
     const handleChange = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
-    
+
     // Set initial value
     setIsDarkMode(darkModeMediaQuery.matches);
-    
+
     // Listen for changes
-    darkModeMediaQuery.addEventListener('change', handleChange);
-    return () => darkModeMediaQuery.removeEventListener('change', handleChange);
+    darkModeMediaQuery.addEventListener("change", handleChange);
+    return () => darkModeMediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   // Trigger animation on first in-view
@@ -79,8 +81,8 @@ const DijkstrasDiagram = () => {
   // Define nodes with positions (landscape orientation) and labels.
   // Layout adjusted for better visual spacing and approximate weight representation.
   const nodes = [
-    { x: 60,  y: 150, label: "A" }, // Start node (Left side)
-    { x: 200, y: 70,  label: "B" }, // Top-left area
+    { x: 60, y: 150, label: "A" }, // Start node (Left side)
+    { x: 200, y: 70, label: "B" }, // Top-left area
     { x: 320, y: 180, label: "C" }, // Central area, slightly lower
     { x: 230, y: 260, label: "D" }, // Bottom-left area
     { x: 480, y: 240, label: "E" }, // Bottom-right area
@@ -110,16 +112,24 @@ const DijkstrasDiagram = () => {
 
   // Define colors based on dark/light mode
   const colors = {
-    background: isDarkMode ? 'rgba(10, 10, 10, 0.8)' : 'rgba(249, 250, 251, 0.8)',
-    backgroundGradientStart: isDarkMode ? 'hsl(0, 0%, 12%)' : 'hsl(220, 13%, 95%)',
-    backgroundGradientEnd: isDarkMode ? 'hsl(240, 87%, 30%)' : 'hsl(220, 13%, 90%)',
-    nodeColor: isDarkMode ? 'hsl(217, 100%, 30%)' : 'hsl(210, 100%, 40%)',
-    nodeStroke: isDarkMode ? 'hsl(217, 100%, 40%)' : 'hsl(210, 100%, 50%)',
-    nodeTextColor: isDarkMode ? 'hsl(0, 0%, 100%)' : 'hsl(0, 0%, 100%)',
-    edgeColor: isDarkMode ? 'hsl(0, 0%, 50%)' : 'hsl(0, 0%, 60%)',
-    shortestPathColor: isDarkMode ? 'hsl(150, 100%, 40%)' : 'hsl(150, 100%, 35%)',
-    startNodeColor: isDarkMode ? 'hsl(120, 100%, 35%)' : 'hsl(120, 100%, 40%)',
-    weightTextColor: isDarkMode ? 'hsl(0, 0%, 70%)' : 'hsl(0, 0%, 40%)',
+    background: isDarkMode
+      ? "rgba(10, 10, 10, 0.8)"
+      : "rgba(249, 250, 251, 0.8)",
+    backgroundGradientStart: isDarkMode
+      ? "hsl(0, 0%, 12%)"
+      : "hsl(220, 13%, 95%)",
+    backgroundGradientEnd: isDarkMode
+      ? "hsl(240, 87%, 30%)"
+      : "hsl(220, 13%, 90%)",
+    nodeColor: isDarkMode ? "hsl(217, 100%, 30%)" : "hsl(210, 100%, 40%)",
+    nodeStroke: isDarkMode ? "hsl(217, 100%, 40%)" : "hsl(210, 100%, 50%)",
+    nodeTextColor: isDarkMode ? "hsl(0, 0%, 100%)" : "hsl(0, 0%, 100%)",
+    edgeColor: isDarkMode ? "hsl(0, 0%, 50%)" : "hsl(0, 0%, 60%)",
+    shortestPathColor: isDarkMode
+      ? "hsl(150, 100%, 40%)"
+      : "hsl(150, 100%, 35%)",
+    startNodeColor: isDarkMode ? "hsl(120, 100%, 35%)" : "hsl(120, 100%, 40%)",
+    weightTextColor: isDarkMode ? "hsl(0, 0%, 70%)" : "hsl(0, 0%, 40%)",
   };
 
   return (
@@ -188,19 +198,25 @@ const DijkstrasDiagram = () => {
           // Use different colors for start node (A) and nodes on shortest path (C, F)
           const isStartNode = i === 0;
           const isOnShortestPath = i === 2 || i === 5;
-          
-          const nodeFill = isStartNode 
+
+          const nodeFill = isStartNode
             ? colors.startNodeColor
             : isOnShortestPath
-              ? colors.nodeColor 
-              : isDarkMode ? 'hsl(217, 70%, 25%)' : 'hsl(210, 70%, 50%)';
-              
-          const nodeStroke = isStartNode 
-            ? isDarkMode ? 'hsl(120, 100%, 45%)' : 'hsl(120, 100%, 50%)'
+              ? colors.nodeColor
+              : isDarkMode
+                ? "hsl(217, 70%, 25%)"
+                : "hsl(210, 70%, 50%)";
+
+          const nodeStroke = isStartNode
+            ? isDarkMode
+              ? "hsl(120, 100%, 45%)"
+              : "hsl(120, 100%, 50%)"
             : isOnShortestPath
               ? colors.nodeStroke
-              : isDarkMode ? 'hsl(217, 70%, 35%)' : 'hsl(210, 70%, 60%)';
-          
+              : isDarkMode
+                ? "hsl(217, 70%, 35%)"
+                : "hsl(210, 70%, 60%)";
+
           return (
             <motion.circle
               key={`node-${i}`}
