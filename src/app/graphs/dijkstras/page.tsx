@@ -8,6 +8,7 @@ import {
   dijkstra,
   DijkstraStep,
   DijkstraResult,
+  reconstructPath,
 } from "@/algorithms-core/dijkstras";
 
 import {
@@ -81,6 +82,7 @@ const DijkstrasPage: FC = () => {
   const [graphSize, setGraphSize] = useState<number>(14);
   const [debug, setDebug] = useState<boolean>(false);
   const [useGradient, setUseGradient] = useState<boolean>(COLORS.USE_GRADIENT);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   // Add background color state
   const [backgroundOptions, setBackgroundOptions] = useState({
@@ -100,6 +102,7 @@ const DijkstrasPage: FC = () => {
     setIsRunning(false);
     setCurrentStepIndex(0);
     setAlgorithmResult(null);
+    setHoveredNodeId(null);
 
     const newGraph = createRandomGraph(
       graphSize,
@@ -264,7 +267,46 @@ const DijkstrasPage: FC = () => {
     updateVisualization(algorithmResult.steps[prevStepIndex], algorithmResult);
   };
 
-  const updateVisualization = (
+  const addHoverPathHighlights = useCallback((
+    nodeId: string,
+    result: DijkstraResult,
+    existingEdges: EdgeHighlight[]
+  ) => {
+    if (!startNodeId || nodeId === startNodeId) return;
+
+    // Reconstruct path from start to hovered node
+    let currentNodeId = nodeId;
+    const pathEdges: EdgeHighlight[] = [];
+
+    while (currentNodeId && currentNodeId !== startNodeId) {
+      const prevNodeId = result.previous.get(currentNodeId);
+      if (prevNodeId) {
+        // Add path edge with distinctive color
+        pathEdges.push({
+          sourceId: prevNodeId,
+          targetId: currentNodeId,
+          color: "hsl(60, 100%, 50%)", // Yellow highlight for hover path
+          width: 4, // Slightly thicker for visibility
+        });
+        currentNodeId = prevNodeId;
+      } else {
+        break;
+      }
+    }
+
+    // Remove any existing shortest path edges that conflict with hover path
+    const pathEdgeIds = new Set(pathEdges.map(e => [e.sourceId, e.targetId].sort().join("-")));
+    const filteredExistingEdges = existingEdges.filter(e => {
+      const edgeId = [e.sourceId, e.targetId].sort().join("-");
+      return !pathEdgeIds.has(edgeId) || e.color !== COLORS.SHORTEST_PATH;
+    });
+
+    // Add hover path edges
+    existingEdges.length = 0;
+    existingEdges.push(...filteredExistingEdges, ...pathEdges);
+  }, [startNodeId, COLORS.SHORTEST_PATH]);
+
+  const updateVisualization = useCallback((
     step: DijkstraStep,
     resultToUse?: DijkstraResult,
   ) => {
@@ -385,9 +427,36 @@ const DijkstrasPage: FC = () => {
       }
     }
 
+    // If hovering over a node and algorithm is complete, highlight the shortest path to that node
+    if (hoveredNodeId && isRunning && currentStepIndex === (result.steps.length - 1)) {
+      addHoverPathHighlights(hoveredNodeId, result, newHighlightedEdges);
+    }
+
     setHighlightedNodes(newHighlightedNodes);
     setHighlightedEdges(newHighlightedEdges);
-  };
+  }, [
+    algorithmResult, 
+    startNodeId, 
+    graph, 
+    debug, 
+    currentStepIndex, 
+    useGradient, 
+    hoveredNodeId, 
+    isRunning, 
+    addHoverPathHighlights,
+    COLORS
+  ]);
+
+  const handleNodeHover = useCallback((nodeId: string | null) => {
+    if (!isRunning || !algorithmResult) return;
+
+    setHoveredNodeId(nodeId);
+
+    // Only update visualization if we're at the final step (algorithm complete)
+    if (currentStepIndex === algorithmResult.steps.length - 1) {
+      updateVisualization(algorithmResult.steps[currentStepIndex], algorithmResult);
+    }
+  }, [isRunning, algorithmResult, currentStepIndex, updateVisualization]);
 
   useEffect(() => {
     return () => {
@@ -422,6 +491,7 @@ const DijkstrasPage: FC = () => {
                     highlightedNodes={highlightedNodes}
                     highlightedEdges={highlightedEdges}
                     backgroundOptions={backgroundOptions}
+                    onNodeHover={handleNodeHover}
                   />
                 )}
               </div>
