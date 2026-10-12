@@ -11,7 +11,7 @@ const UnderConstructionPage = () => {
       <Header />
 
       {/* Hero section */}
-      <section className="h-[60vh] flex flex-col items-center justify-center relative overflow-hidden">
+      <section className="min-h-[60vh] py-16 flex flex-col items-center justify-center relative overflow-hidden">
         {/* Background effect */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(75,75,75,0.1)_0,_rgba(25,25,25,0.2)_50%,_rgba(10,10,10,0.3)_100%)]"></div>
 
@@ -21,7 +21,7 @@ const UnderConstructionPage = () => {
           transition={{ duration: 0.8 }}
           className="text-center z-10 px-4"
         >
-          <h1 className="text-6xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 p-4 leading-tight">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 p-4 leading-tight">
             Under Construction
           </h1>
           <p className="mt-6 text-xl text-gray-300 max-w-2xl mx-auto">

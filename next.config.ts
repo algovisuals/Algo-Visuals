@@ -1,16 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Fully static build (out/) for Cloudflare Pages. No Node server at runtime.
+  output: "export",
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "placehold.co",
-      },
-    ],
+    // The Image Optimization API needs a server; serve images as-is.
+    unoptimized: true,
   },
 };
-
-module.exports = nextConfig;
 
 export default nextConfig;

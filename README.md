@@ -22,6 +22,7 @@ Algo-Visuals is an interactive web application that demonstrates how classic alg
 - Implemented Algorithms
 - Tech Stack
 - Getting Started
+- Deploy (Cloudflare Pages)
 - Contributing
 - License
 
@@ -63,10 +64,10 @@ _Additional algorithm categories (Trees, Linked Lists, Heaps, Dynamic Programmin
 
 ### Next.js & React
 
-- **Next.js:** A React framework that provides:
-  - Server-Side Rendering (SSR) for improved initial load times and SEO
-  - Static Site Generation (SSG) for rapid delivery of static content
-- **React:** Powers the UI with reusable components
+- **Next.js 15 (App Router):** Built as a fully static export (`output: "export"`) into `out/`
+- **React 19:** Powers the UI with reusable components
+
+The site has no server, API routes or server actions. It must not be deployed as a Node server (`next start`, standalone output or Docker).
 
 ### Styling & Animation
 
@@ -84,8 +85,8 @@ _Additional algorithm categories (Trees, Linked Lists, Heaps, Dynamic Programmin
 
 ### Prerequisites
 
-- **Node.js** (v14+ recommended)
-- **npm** or **yarn**
+- **Node.js** 22 (20+ works)
+- **npm**
 
 ### Installation
 
@@ -99,20 +100,37 @@ _Additional algorithm categories (Trees, Linked Lists, Heaps, Dynamic Programmin
 2. **Install dependencies:**
 
    ```bash
-   npm install
-   # or
-   yarn install
+   npm ci
    ```
 
 3. **Run the development server:**
 
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
    Open your browser and visit `http://localhost:3000` to see the application in action.
+
+4. **Build the static site:**
+
+   ```bash
+   npm run build
+   ```
+
+   This runs the Jest tests, then writes the static site to `out/`. Preview it with any static file server, for example `npx serve out`.
+
+---
+
+## Deploy (Cloudflare Pages)
+
+Connect the GitHub repo in Cloudflare Pages with these build settings:
+
+- Framework preset: **Next.js (Static HTML Export)**
+- Build command: `npm run build`
+- Build output directory: `out`
+- Environment variable: `NODE_VERSION=22`
+
+Cloudflare serves the files in `out/` directly; there is nothing to run.
 
 ---
 

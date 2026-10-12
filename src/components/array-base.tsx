@@ -48,7 +48,11 @@ const ArrayBase: FC<ArrayBaseProps> = ({ array, pivotIndex, comparing }) => {
 
     // How many boxes fit in a row (limited by maxBoxPerRow)
     const boxesPerRow = Math.min(
-      Math.floor((dimensions.width + spacing) / (boxSize + spacing)),
+      // A row is n * (boxSize + spacing) + spacing wide, so fit against that.
+      Math.max(
+        1,
+        Math.floor((dimensions.width - spacing) / (boxSize + spacing)),
+      ),
       maxBoxPerRow,
       array.length, // Don't use more boxes per row than we have elements
     );
