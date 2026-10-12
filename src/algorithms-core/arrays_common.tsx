@@ -33,7 +33,10 @@ export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
     const updateDimensions = () => {
       if (containerRef.current) {
         setDimensions({
-          width: containerRef.current.clientWidth,
+          // Measure the SVG itself; the container includes the p-4 padding
+          // around it, which made the last bars overflow and get clipped.
+          width:
+            svgRef.current?.clientWidth || containerRef.current.clientWidth,
           height: 400,
         });
       }
@@ -51,8 +54,11 @@ export const ArrayVisualizer: FC<ArrayVisualizerProps> = ({ step }) => {
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
 
-    const svg = d3.select(svgRef.current);
     const { width, height } = dimensions;
+    // Skip the first pass before the size is measured (negative bar widths).
+    if (width === 0) return;
+
+    const svg = d3.select(svgRef.current);
 
     let g = svg.select<SVGGElement>("g");
     if (g.empty()) {
