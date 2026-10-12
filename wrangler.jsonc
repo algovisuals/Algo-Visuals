@@ -1,0 +1,9 @@
+{
+  "name": "algovisuals",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./out", "not_found_handling": "404-page" },
+  "routes": [
+    { "pattern": "algovisuals.com/*", "zone_name": "algovisuals.com" },
+    { "pattern": "www.algovisuals.com/*", "zone_name": "algovisuals.com" }
+  ]
+}
